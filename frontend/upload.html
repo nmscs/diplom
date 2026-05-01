@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Animation</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    
+</head>
+
+<body>
+
+    <!-- Шапка -->
+    <div class="topbar">
+        <a href="index.html" class="topbar-link">home</a>
+        <a href="works.html" class="topbar-link">works</a>
+        <a href="profile.html" id="navProfile" class="nav-link nav-profile">profile</a>
+
+
+    </div>
+
+    <div class="upload-wrapper">
+
+        <div class="upload-title" id="uploadTitle">New animation</div>
+
+        <div class="upload-form">  
+
+            <div class="form-field">
+                <input id="animationName" class="input-name" placeholder="Animation name">
+                <div class="error" id="nameError"></div>
+            </div>
+
+
+            <div class="form-field">
+                <textarea id="animationDescription"
+                    placeholder="Animation description"
+                    class="input-description"></textarea>
+            </div>
+
+
+            <!-- Загрузка MP4 -->
+            <div class="upload-block">
+                <div class="form-field">
+                    <div class="form-row">
+                        <button class="upload-btn2" id="uploadMP4Btn">Upload MP4</button>
+                        <span class="tooltip" data-tip="Загрузите файл с вашей анимацией в формате MP4">?</span>
+                    </div>
+                    <div class="error" id="mp4Error"></div>
+
+                    <input type="file" id="mp4Input" accept="video/mp4" hidden>
+
+                    <div class="progress-container" id="mp4ProgressBox">
+                        <div class="progress-bar" id="mp4Progress"></div>
+                    </div>
+
+                    <video id="mp4Preview" controls style="display:none;"></video>
+                </div>
+            </div>
+
+            <!-- Загрузка PNG папки -->
+            <div class="upload-block">
+                <div class="form-field">
+                    <div class="form-row">
+                        <button class="upload-btn2" id="uploadPNGBtn">Upload PNG sequence</button>
+                        <span class="tooltip" data-tip="Загрузите папку с PNG-кадрами">?</span>
+                    </div>
+
+                    <div class="error" id="pngError"></div>
+
+                    <input type="file" id="pngInput" accept="image/png" webkitdirectory directory multiple hidden>
+
+                    <div class="progress-container" id="pngProgressBox">
+                        <div class="progress-bar" id="pngProgress"></div>
+                    </div>
+
+                    <div class="png-preview" id="pngPreview">
+                        <img id="pngPreviewImg">
+                    </div>
+                    <div class="png-nav">
+                        <button id="pngPrev">◀</button>
+                        <span id="pngCounter">1 / 1</span>
+                        <button id="pngNext">▶</button>
+                    </div>
+
+                    <button id="setPngCoverBtn">Set as cover</button>
+                </div>
+
+            </div>
+
+            <div id="uploadError" class="error"></div>
+
+            <button class="save-btn-upload" id="saveAnimationBtn">Save animation</button>
+        </div> 
+    </div>
+
+    <script src="script.js"></script>
+    <div id="toast" class="toast"></div>
+
+</body>
+</html>

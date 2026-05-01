@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сайт-портфолио</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Добавляем базовый стиль для стрелок */
+        .carousel-control {
+            font-family: sans-serif;
+            font-size: 30px;
+            cursor: pointer;
+            user-select: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    
+
+<!-- Модальное окно входа  -->
+<div id="signinModal" class="modal hidden">
+    <div class="modal-card">
+        <div class="modal-close">&times;</div>
+        <h2>sign in</h2>
+
+        <input id="signinUsername" type="text" placeholder="@username" />
+        <div class="error" id="signinUserError"></div>
+        <input id="signinPassword" type="password" placeholder="password" />
+        <div class="error" id="signinPassError"></div>
+
+        <button id="signinSubmit" class="primary-btn">sign in</button>
+
+
+        <div class="or">or</div>
+
+        <div id="openRegister" class="link">create an account</div>
+    </div>
+</div>
+
+<!--  RМодальное окно регистрации  -->
+<div id="registerModal" class="modal hidden">
+    <div class="modal-card">
+        <div class="modal-close">&times;</div>
+        <h2>registration</h2>
+
+        <input id="regName" type="text" placeholder="name" />
+        <div class="error" id="regNameError"></div>
+        <input id="regUsername" type="text" placeholder="@username" />
+        <div class="error" id="regUserError"></div>
+        <input id="regPassword" type="password" placeholder="password" />
+        <div class="error" id="regPassError"></div>
+
+        <button id="registerSubmit" class="primary-btn">create</button>
+
+        <div id="openSignin" class="link">already have an account?</div>
+    </div>
+</div>
+
+    <nav class="sidebar">
+        <ul>
+            <li><a href="#" class="nav-link">home</a></li>
+            <li><a href="works.html" class="nav-link">works</a></li>
+            <li><span id="profileBtn" class="nav-link">sign in</span></li>
+            <li><span id="signoutSidebar" class="nav-link hidden">sign out</span></li>
+        </ul>
+    </nav>
+
+    <main class="content-section">
+        <video id="background-video" autoplay muted loop playsinline>
+            <source src="site2.mp4" type="video/mp4">
+            Твой браузер не поддерживает тег video.
+        </video>
+    </main>
+
+    <section class="gallery-section">
+        <div class="section-title">Latest animations</div>
+
+        <div id="latestGrid" class="animation-grid">
+        </div>
+    </section>
+
+
+    <script src="script.js"></script>
+</body>
+
+
+
+</html>

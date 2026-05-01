@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viewer</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Шапка -->
+    <div class="topbar">
+        <a href="index.html" class="topbar-link">home</a>
+        <a href="works.html" class="topbar-link">works</a>
+        <a href="profile.html" id="navProfile" class="nav-link nav-profile">profile</a>
+    </div>
+
+    <div class="viewer-wrapper">
+
+        <div class="viewer-switch">
+            <button id="switchVideo" class="switch-btn active">Video</button>
+            <button id="switchPNG" class="switch-btn">PNG sequence</button>
+        </div>
+
+        <div class="viewer-layout">
+
+            <!-- ЛЕВАЯ КОЛОНКА (видео + speed) -->
+            <div class="viewer-left">
+
+                <!-- Просмотр -->
+                <div class="viewer-box" id="viewerBox">
+                    <video id="viewerVideo" controls></video>
+                    <img id="viewerImg" style="display:none;">
+
+                    <div class="arrow left" id="arrowLeft">
+                        <img src="arrowleft.png">
+                    </div>
+
+                    <div class="arrow right" id="arrowRight">
+                        <img src="arrowright.png">
+                    </div>
+
+                    <div class="frame-counter" id="frameCounter"></div>
+                </div>
+
+                <!-- SPEED ПОД ВИДЕО -->
+                <div class="speed-control" id="speedControl">
+                    <label for="speedSelect">Speed</label>
+                    <select id="speedSelect">
+                        <option value="0.25">0.25×</option>
+                        <option value="0.5">0.5×</option>
+                        <option value="0.75">0.75×</option>
+                        <option value="1" selected>1×</option>
+                        <option value="1.5">1.5×</option>
+                        <option value="2">2×</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <!-- ПРАВАЯ КОЛОНКА -->
+            <div class="viewer-info">
+                <h1 id="animTitle">Animation title</h1>
+
+                <div class="anim-author">
+                    <a href="#" id="animAuthor">@username</a>
+                </div>
+
+                <p class="anim-description" id="animDescription">
+                    Animation description goes here.  
+                    You can write several lines of text.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>

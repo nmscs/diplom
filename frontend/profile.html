@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Шапка -->
+    <div class="topbar">
+        <a href="index.html" class="topbar-link">home</a>
+        <a href="works.html" class="topbar-link">works</a>
+        <a href="profile.html" id="navProfile" class="nav-link nav-profile">profile</a>
+
+
+    </div>
+
+    <!-- Информация профиля -->
+    <div class="profile-wrapper">
+        <div class="avatar-wrapper">
+            <div class="avatar">
+                <img id="avatarPreview" class="avatar-img" alt="">
+            </div>
+        </div>
+
+        <div class="userinfo">
+            <div id="displayName" class="name">Name</div>
+            <div id="displayUsername" class="username">@username</div>
+            <button class="edit-btn" id="openEditModal">edit</button>
+        </div>
+    </div>
+
+    <!-- Анимации -->
+    <div class="section-title section-title-anim">
+        Animations
+        <button id="goUpload" class="upload-btn">upload animation</button>
+    </div>
+
+    <div id="animationGrid" class="animation-grid">
+    </div>
+
+    <!-- Поп-ап удаления -->
+    <div id="deletePopup" class="delete-popup hidden">
+        <div class="delete-box">
+            Delete this animation?
+            <div class="delete-buttons">
+                <button id="confirmDelete" class="confirm-btn">Delete</button>
+                <button id="cancelDelete" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования профиля -->
+    <div class="modal hidden" id="editProfileModal">
+        <div class="modal-content profile-edit-box">
+
+            <div class="modal-close" id="closeEditModal">×</div>
+
+            <div class="edit-avatar-wrapper">
+                <img id="editAvatarPreview" class="edit-avatar-img" alt="">
+                <div class="edit-avatar-overlay">Change avatar</div>
+                <input type="file" id="editAvatarUpload" accept="image/*" hidden>
+            </div>
+
+            <div class="avatar-actions">
+                <button id="removeAvatarBtn" class="remove-avatar-btn">
+                    Remove avatar
+                </button>
+            </div>
+
+            <input type="text" id="editName" class="edit-input" placeholder="Name">
+            <div class="error-text" id="editNameError"></div>
+
+            <input type="text" id="editUsername" class="edit-input" placeholder="@username">
+            <div class="error-text" id="editUserError"></div>
+
+            <button id="saveProfile" class="save-btn">save</button>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
