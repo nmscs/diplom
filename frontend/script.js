@@ -183,7 +183,7 @@ function handleSignIn() {
     signinUsername.classList.remove("input-error");
     signinPassword.classList.remove("input-error");
 
-    fetch("http://localhost:3000/api/auth/login", {
+    fetch("https://diplom-r1b8.onrender.com/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password })
@@ -262,7 +262,7 @@ function handleSignUp() {
     }
 
     // Успешная регистрация 
-    fetch("http://localhost:3000/api/auth/register", {
+    fetch("https://diplom-r1b8.onrender.com/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, username, password })
@@ -353,7 +353,7 @@ if (openEditModal && editProfileModal) {
 
         // 🔥 дефолтная аватарка
         if (backendUser.avatar) {
-            editAvatarPreview.src = `http://localhost:3000${backendUser.avatar}`;
+            editAvatarPreview.src = `https://diplom-r1b8.onrender.com${backendUser.avatar}`;
         } else {
             editAvatarPreview.src = "images/default-avatar.png";
         }
@@ -458,7 +458,7 @@ if (openEditModal && editProfileModal) {
             formData.append("avatar", editAvatarUpload.files[0]);
         }
 
-        const res = await fetch("http://localhost:3000/api/profile/me", {
+        const res = await fetch("https://diplom-r1b8.onrender.com/api/profile/me", {
             method: "PUT",
             headers: {
                 "Authorization": "Bearer " + token
@@ -776,7 +776,7 @@ async function setupUploadPage() {
                 formData.append("cover", thumbnail, "cover.webp");
             }
 
-            const res = await fetch("http://localhost:3000/api/animations", {
+            const res = await fetch("https://diplom-r1b8.onrender.com/api/animations", {
                 method: "POST",
                 headers: {
                     "Authorization": "Bearer " + token
@@ -812,7 +812,7 @@ async function setupProfilePage() {
     let userProfile;
 
     try {
-        const res = await fetch(`http://localhost:3000/api/users/${profileUser}`);
+        const res = await fetch(`https://diplom-r1b8.onrender.com/api/users/${profileUser}`);
         if (!res.ok) throw new Error();
 
         userProfile = await res.json();
@@ -847,11 +847,11 @@ async function setupProfilePage() {
 
 
     if (userProfile.avatar) {
-        avatarPreview.src = `http://localhost:3000${userProfile.avatar}`;
+        avatarPreview.src = `https://diplom-r1b8.onrender.com${userProfile.avatar}`;
         avatarPreview.style.display = "block";
     } else {
         if (userProfile.avatar) {
-            avatarPreview.src = `http://localhost:3000${userProfile.avatar}`;
+            avatarPreview.src = `https://diplom-r1b8.onrender.com${userProfile.avatar}`;
         } else {
             avatarPreview.src = "images/default-avatar.png";
         }
@@ -883,7 +883,7 @@ async function setupProfilePage() {
 
     try {
         const res = await fetch(
-            `http://localhost:3000/api/users/${profileUser}/animations`
+            `https://diplom-r1b8.onrender.com/api/users/${profileUser}/animations`
         );
         animations = await res.json();
     } catch (err) {
@@ -903,7 +903,7 @@ async function setupProfilePage() {
         item.className = "animation-item";
 
         const img = document.createElement("img");
-        img.src = `http://localhost:3000${anim.cover_path}`;
+        img.src = `https://diplom-r1b8.onrender.com${anim.cover_path}`;
 
 
         const titleEl = document.createElement("div");
@@ -967,7 +967,7 @@ async function setupProfilePage() {
     cancelBtn.onclick = closePopup;
 
     confirmBtn.onclick = async () => {
-        const res = await fetch(`http://localhost:3000/api/animations/${pendingDelete}`, {
+        const res = await fetch(`https://diplom-r1b8.onrender.com/api/animations/${pendingDelete}`, {
             method: "DELETE",
             headers: {
                 "Authorization": "Bearer " + localStorage.getItem("token")
@@ -1018,7 +1018,7 @@ async function setupViewerPage() {
     let currentFrame = 0;
 
     try {
-        const res = await fetch(`http://localhost:3000/api/animations/${id}`);
+        const res = await fetch(`https://diplom-r1b8.onrender.com/api/animations/${id}`);
         if (!res.ok) {
             alert("Animation not found");
             return;
@@ -1032,12 +1032,12 @@ async function setupViewerPage() {
         descEl.textContent = anim.description || "";
 
         if (anim.video_path) {
-            videoEl.src = `http://localhost:3000${anim.video_path}`;
+            videoEl.src = `https://diplom-r1b8.onrender.com${anim.video_path}`;
             videoEl.playbackRate = 1; // дефолт
         }
 
         if (anim.frames && anim.frames.length) {
-            frames = anim.frames.map(frame => `http://localhost:3000${frame}`);
+            frames = anim.frames.map(frame => `https://diplom-r1b8.onrender.com${frame}`);
         }
 
     } catch (err) {
@@ -1128,7 +1128,7 @@ async function setupWorksPage() {
     let animations = [];
 
     try {
-        const res = await fetch("http://localhost:3000/api/animations");
+        const res = await fetch("https://diplom-r1b8.onrender.com/api/animations");
         if (!res.ok) throw new Error("Failed to load animations");
         animations = await res.json();
     } catch (err) {
@@ -1148,7 +1148,7 @@ async function setupWorksPage() {
 
         
         const img = document.createElement("img");
-        img.src = `http://localhost:3000${anim.cover_path}`;
+        img.src = `https://diplom-r1b8.onrender.com${anim.cover_path}`;
         item.appendChild(img);
 
         item.onclick = () => {
@@ -1197,7 +1197,7 @@ async function setupIndexCarousel() {
     const track = document.getElementById("carouselTrack");
     if (!track) return;
 
-    const res = await fetch("http://localhost:3000/api/animations");
+    const res = await fetch("https://diplom-r1b8.onrender.com/api/animations");
     let animations = await res.json();
 
     if (!animations.length) return;
@@ -1216,7 +1216,7 @@ async function setupIndexCarousel() {
         item.className = "carousel-item";
 
         const img = document.createElement("img");
-        img.src = `http://localhost:3000${anim.cover_path}`;
+        img.src = `https://diplom-r1b8.onrender.com${anim.cover_path}`;
         img.style.width = "100%";
         img.style.height = "100%";
         img.style.objectFit = "cover";
@@ -1276,7 +1276,7 @@ async function setupIndexLatest() {
     const grid = document.getElementById("latestGrid");
     if (!grid) return;
 
-    const res = await fetch("http://localhost:3000/api/animations");
+    const res = await fetch("https://diplom-r1b8.onrender.com/api/animations");
     let animations = await res.json();
 
     // сортируем по дате (новые сверху)
@@ -1295,7 +1295,7 @@ async function setupIndexLatest() {
         item.className = "animation-item";
 
         const img = document.createElement("img");
-        img.src = `http://localhost:3000${anim.cover_path}`;
+        img.src = `https://diplom-r1b8.onrender.com${anim.cover_path}`;
 
         item.appendChild(img);
         item.onclick = () => {
@@ -1344,7 +1344,7 @@ function logout() {
 }
 
 async function login(username, password) {
-  const res = await fetch('http://localhost:3000/api/auth/login', {
+  const res = await fetch('https://diplom-r1b8.onrender.com/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
