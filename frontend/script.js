@@ -903,7 +903,7 @@ async function setupProfilePage() {
         item.className = "animation-item";
 
         const img = document.createElement("img");
-        img.src = `https://diplom-r1b8.onrender.com${anim.cover_path}`;
+        img.src = anim.cover_path;
 
 
         const titleEl = document.createElement("div");
@@ -1032,12 +1032,12 @@ async function setupViewerPage() {
         descEl.textContent = anim.description || "";
 
         if (anim.video_path) {
-            videoEl.src = `https://diplom-r1b8.onrender.com${anim.video_path}`;
+            videoEl.src = anim.video_path;
             videoEl.playbackRate = 1; // дефолт
         }
 
         if (anim.frames && anim.frames.length) {
-            frames = anim.frames.map(frame => `https://diplom-r1b8.onrender.com${frame}`);
+            frames = anim.frames || [];
         }
 
     } catch (err) {
@@ -1148,7 +1148,7 @@ async function setupWorksPage() {
 
         
         const img = document.createElement("img");
-        img.src = `https://diplom-r1b8.onrender.com${anim.cover_path}`;
+        img.src = anim.cover_path;
         item.appendChild(img);
 
         item.onclick = () => {
@@ -1216,7 +1216,7 @@ async function setupIndexCarousel() {
         item.className = "carousel-item";
 
         const img = document.createElement("img");
-        img.src = `https://diplom-r1b8.onrender.com${anim.cover_path}`;
+        img.src = anim.cover_path;
         img.style.width = "100%";
         img.style.height = "100%";
         img.style.objectFit = "cover";
@@ -1295,7 +1295,7 @@ async function setupIndexLatest() {
         item.className = "animation-item";
 
         const img = document.createElement("img");
-        img.src = `https://diplom-r1b8.onrender.com${anim.cover_path}`;
+        img.src = anim.cover_path;
 
         item.appendChild(img);
         item.onclick = () => {

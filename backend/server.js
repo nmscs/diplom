@@ -8,8 +8,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
 import fs from 'fs';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 const app = express();
 const PORT = 3000;
@@ -26,25 +32,7 @@ const uploadDir = path.join(__dirname, 'uploads');
   }
 });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (file.fieldname === 'video') {
-      cb(null, path.join(uploadDir, 'videos'));
-    } else if (file.fieldname === 'cover') {
-      cb(null, path.join(uploadDir, 'covers'));
-    } else if (file.fieldname === 'avatar') {
-      cb(null, path.join(uploadDir, 'avatars'));
-    } else {
-      cb(null, path.join(uploadDir, 'frames'));
-    }
-  },
-  filename: (req, file, cb) => {
-    const unique = Date.now() + '-' + Math.random().toString(36).substring(2, 6);
-    cb(null, unique + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ storage });
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Настройки
 app.use(cors());
@@ -66,6 +54,34 @@ function authMiddleware(req, res, next) {
   } catch (err) {
     return res.status(401).json({ error: "Неверный токен" });
   }
+}
+
+async function uploadToSupabase(file, bucketName) {
+  if (!file) return null;
+
+  const ext = path.extname(file.originalname);
+  const safeName =
+    Date.now() +
+    '-' +
+    Math.random().toString(36).substring(2, 8) +
+    ext;
+
+  const { error } = await supabase.storage
+    .from(bucketName)
+    .upload(safeName, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  const { data } = supabase.storage
+    .from(bucketName)
+    .getPublicUrl(safeName);
+
+  return data.publicUrl;
 }
 
 // --- МАРШРУТЫ АВТОРИЗАЦИИ ---
@@ -165,9 +181,15 @@ app.post(
         return res.status(400).json({ error: 'Video and cover required' });
       }
 
-      const videoPath = `/uploads/videos/${video.filename}`;
-      const coverPath = `/uploads/covers/${cover.filename}`;
-      const framePaths = frames.map(frame => `/uploads/frames/${frame.filename}`);
+      const videoPath = await uploadToSupabase(video, 'videos');
+      const coverPath = await uploadToSupabase(cover, 'covers');
+
+      const framePaths = [];
+
+      for (const frame of frames) {
+        const frameUrl = await uploadToSupabase(frame, 'frames');
+        framePaths.push(frameUrl);
+      }
 
       const result = await pool.query(
         `INSERT INTO animations (title, description, video_path, cover_path, frames, author_id)
