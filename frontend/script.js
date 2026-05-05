@@ -1,3 +1,5 @@
+const API = 'https://diplom-r1b8.onrender.com';
+
 let currentUser = null;
 
 const token = localStorage.getItem("token");
