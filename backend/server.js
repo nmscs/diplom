@@ -11,6 +11,7 @@ import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
+console.log("DATABASE_URL CHECK:", process.env.DATABASE_URL?.split("@")[0]);
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
