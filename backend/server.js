@@ -285,14 +285,7 @@ app.put('/api/profile/me', authMiddleware, upload.single('avatar'), async (req, 
         avatarPath = null;
     }
     else if (req.file) {
-        if (avatarPath) {
-            const oldAvatarFullPath = path.join(__dirname, '..', avatarPath.replace(/^\/+/, ''));
-            if (fs.existsSync(oldAvatarFullPath)) {
-                fs.unlinkSync(oldAvatarFullPath);
-            }
-        }
-
-        avatarPath = `/uploads/avatars/${req.file.filename}`;
+        avatarPath = await uploadToSupabase(req.file, 'avatars');
     }
 
     const result = await pool.query(
@@ -347,8 +340,8 @@ app.delete('/api/animations/:id', authMiddleware, async (req, res) => {
       }
     };
 
-    deleteFile(anim.video_path);
-    deleteFile(anim.cover_path);
+    // удаляем только из базы
+    await pool.query('DELETE FROM animations WHERE id = $1', [id]);
 
     if (anim.frames && anim.frames.length) {
       anim.frames.forEach(frame => deleteFile(frame));
