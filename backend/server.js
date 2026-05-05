@@ -39,7 +39,7 @@ app.use(cors());
 app.use(express.json());
 
 // Раздача статических файлов
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+//app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Middleware для проверки токена (авторизация)
 function authMiddleware(req, res, next) {
@@ -99,8 +99,14 @@ app.post('/api/auth/register', async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(400).json({ error: 'Пользователь уже существует' });
-  }
+      console.error(err);
+
+      if (err.code === '23505') {
+        return res.status(400).json({ error: 'Пользователь уже существует' });
+      }
+
+      res.status(500).json({ error: 'Ошибка сервера' });
+    }
 });
 
 // Вход
@@ -117,8 +123,9 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, name: user.name, username: user.username } });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка сервера' });
-  }
+      onsole.error("LOGIN ERROR:", err);
+      res.status(500).json({ error: 'Ошибка сервера' });
+    }
 });
 
 // --- МАРШРУТЫ АНИМАЦИЙ ---
