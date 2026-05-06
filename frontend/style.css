@@ -1396,7 +1396,7 @@ body {
 .like-btn {
     border: none;
     background: rgba(255,255,255,0.08);
-    color: white;
+    color: #d946ef;
 
     padding: 12px 18px;
 
@@ -1430,5 +1430,5 @@ body {
     font-size: 15px;
     font-weight: 600;
 
-    color: white;
+    color: #d946ef;
 }
