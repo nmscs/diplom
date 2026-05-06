@@ -805,8 +805,16 @@ async function setupUploadPage() {
 
                 uploadProgressBar.style.width = percent + "%";
 
-                uploadStatusText.textContent =
-                    `Uploading... ${percent}%`;
+                if (percent >= 100) {
+
+                    uploadStatusText.textContent =
+                        "Publishing animation...";
+
+                } else {
+
+                    uploadStatusText.textContent =
+                        `Uploading... ${percent}%`;
+                }
             };
 
             xhr.onload = () => {
@@ -819,8 +827,13 @@ async function setupUploadPage() {
 
                 if (xhr.status >= 200 && xhr.status < 300) {
 
-                    location.href =
-                        `profile.html?user=${currentUser}`;
+                    uploadStatusText.textContent =
+                        "Animation published";
+
+                    setTimeout(() => {
+                        location.href =
+                            `profile.html?user=${currentUser}`;
+                    }, 600);
 
                 } else {
 

@@ -1360,7 +1360,28 @@ body {
 .upload-progress-bar {
     width: 0%;
     height: 100%;
-    background: white;
+    background: linear-gradient(
+        90deg,
+        #ffffff,
+        #d946ef,
+        #ffffff
+    );
+
+    background-size: 200% 100%;
+
     border-radius: 999px;
+
     transition: width 0.2s ease;
+
+    animation: uploadShimmer 2s linear infinite;
+}
+
+@keyframes uploadShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
