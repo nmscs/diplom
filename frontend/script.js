@@ -1078,6 +1078,7 @@ async function setupViewerPage() {
     const likeBtn = document.getElementById("likeBtn");
     const likesCount = document.getElementById("likesCount");
     const likeIcon = document.getElementById("likeIcon");
+    const likeIcon = document.getElementById("likeIcon");
     const viewsCount = document.getElementById("viewsCount");
 
     speedSelect?.addEventListener("change", () => {
@@ -1121,7 +1122,19 @@ async function setupViewerPage() {
                         "Authorization": "Bearer " + token
                     }
                 }
-            ).catch(console.error);
+            )
+            .then(async (res) => {
+
+                const data = await res.json();
+
+                if (data.newView) {
+
+                    currentViews++;
+
+                    viewsCount.textContent = currentViews;
+                }
+            })
+            .catch(console.error);
         }
 
         titleEl.textContent = anim.title || "Untitled animation";
@@ -1130,6 +1143,7 @@ async function setupViewerPage() {
         descEl.textContent = anim.description || "";
         likesCount.textContent = anim.likes_count || 0;
         viewsCount.textContent = anim.views_count || 0;
+        let currentViews = parseInt(anim.views_count || 0);
         if (anim.liked) {
             likeBtn.classList.add("liked");
             likeIcon.textContent = "♥";
@@ -1250,19 +1264,19 @@ async function setupViewerPage() {
 
                 likeBtn.classList.add("liked");
 
+                likeIcon.textContent = "♥";
+
                 likesCount.textContent =
                     currentLikes + 1;
-
-                likeIcon.textContent = "♥";
 
             } else {
 
                 likeBtn.classList.remove("liked");
 
+                likeIcon.textContent = "♡";
+
                 likesCount.textContent =
                     Math.max(0, currentLikes - 1);
-
-                likeIcon.textContent = "♡";
             }
 
         } catch (err) {

@@ -498,17 +498,36 @@ app.post('/api/animations/:id/view', authMiddleware, async (req, res) => {
     const animationId = req.params.id;
     const userId = req.user.id;
 
+    const existing = await pool.query(
+      `
+      SELECT *
+      FROM animation_views
+      WHERE animation_id = $1
+      AND user_id = $2
+      `,
+      [animationId, userId]
+    );
+
+    if (existing.rows.length > 0) {
+
+      return res.json({
+        success: true,
+        newView: false
+      });
+    }
+
     await pool.query(
-      `INSERT INTO animation_views
-       (animation_id, user_id)
-       VALUES ($1, $2)
-       ON CONFLICT (animation_id, user_id)
-       DO NOTHING`,
+      `
+      INSERT INTO animation_views
+      (animation_id, user_id)
+      VALUES ($1, $2)
+      `,
       [animationId, userId]
     );
 
     res.json({
-      success: true
+      success: true,
+      newView: true
     });
 
   } catch (err) {
