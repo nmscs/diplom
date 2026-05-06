@@ -1124,7 +1124,6 @@ async function setupViewerPage() {
             parseInt(anim.views_count || 0);
 
         if (token) {
-
             fetch(
                 `https://diplom-r1b8.onrender.com/api/animations/${id}/view`,
                 {
@@ -1134,15 +1133,10 @@ async function setupViewerPage() {
                     }
                 }
             )
-            .then(async (res) => {
-
-                const data = await res.json();
-
-                if (data.newView) {
-
-                    currentViews++;
-
-                    viewsCount.textContent = currentViews;
+            .then(res => res.json())
+            .then(data => {
+                if (data.views_count !== undefined) {
+                    viewsCount.textContent = data.views_count;
                 }
             })
             .catch(console.error);
@@ -1264,26 +1258,14 @@ async function setupViewerPage() {
                 parseInt(likesCount.textContent);
 
             if (data.liked) {
-
                 likeBtn.classList.add("liked");
-
                 likeIcon.textContent = "♥";
-
-                likesCount.textContent =
-                    Number(likesCount.textContent) + 1;
-
             } else {
-
                 likeBtn.classList.remove("liked");
-
                 likeIcon.textContent = "♡";
-
-                likesCount.textContent =
-                    Math.max(
-                        0,
-                        Number(likesCount.textContent) - 1
-                    );
             }
+
+            likesCount.textContent = data.likes_count;
 
         } catch (err) {
 

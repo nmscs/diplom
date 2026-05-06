@@ -443,101 +443,84 @@ app.delete('/api/animations/:id', authMiddleware, async (req, res) => {
 // ЛАЙК / УБРАТЬ ЛАЙК
 
 app.post('/api/animations/:id/like', authMiddleware, async (req, res) => {
-
   try {
-
     const animationId = req.params.id;
     const userId = req.user.id;
 
     const existing = await pool.query(
-      `SELECT * FROM animation_likes
+      `SELECT id FROM animation_likes
        WHERE animation_id = $1 AND user_id = $2`,
       [animationId, userId]
     );
 
-    if (existing.rows.length > 0) {
+    let liked;
 
+    if (existing.rows.length > 0) {
       await pool.query(
         `DELETE FROM animation_likes
          WHERE animation_id = $1 AND user_id = $2`,
         [animationId, userId]
       );
 
-      return res.json({
-        liked: false
-      });
+      liked = false;
+    } else {
+      await pool.query(
+        `INSERT INTO animation_likes (animation_id, user_id)
+         VALUES ($1, $2)
+         ON CONFLICT (animation_id, user_id) DO NOTHING`,
+        [animationId, userId]
+      );
+
+      liked = true;
     }
 
-    await pool.query(
-      `INSERT INTO animation_likes
-       (animation_id, user_id)
-       VALUES ($1, $2)`,
-      [animationId, userId]
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS likes_count
+       FROM animation_likes
+       WHERE animation_id = $1`,
+      [animationId]
     );
 
     res.json({
-      liked: true
+      liked,
+      likes_count: countResult.rows[0].likes_count
     });
 
   } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({
-      error: 'Like error'
-    });
+    console.error("LIKE ERROR:", err);
+    res.status(500).json({ error: 'Like error' });
   }
 });
 
 // ПРОСМОТР
 
 app.post('/api/animations/:id/view', authMiddleware, async (req, res) => {
-
   try {
-
     const animationId = req.params.id;
     const userId = req.user.id;
 
     await pool.query(
-      `
-      INSERT INTO animation_views
-      (animation_id, user_id)
-      VALUES ($1, $2)
-      ON CONFLICT (animation_id, user_id)
-      DO NOTHING
-      `,
+      `INSERT INTO animation_views (animation_id, user_id)
+       VALUES ($1, $2)
+       ON CONFLICT (animation_id, user_id) DO NOTHING`,
       [animationId, userId]
     );
 
-    if (existing.rows.length > 0) {
-
-      return res.json({
-        success: true,
-        newView: false
-      });
-    }
-
-    await pool.query(
-      `
-      INSERT INTO animation_views
-      (animation_id, user_id)
-      VALUES ($1, $2)
-      `,
-      [animationId, userId]
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS views_count
+       FROM animation_views
+       WHERE animation_id = $1`,
+      [animationId]
     );
 
     res.json({
       success: true,
-      newView: true
+      views_count: countResult.rows[0].views_count
     });
 
   } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({
-      error: 'View error'
-    });
+    console.error("VIEW ERROR:", err);
+    res.status(500).json({ error: 'View error' });
   }
 });
 
