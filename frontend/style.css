@@ -1480,6 +1480,8 @@ body {
     display: flex;
     align-items: center;
     gap: 14px;
+
+    position: relative;
 }
 
 .analytics-title {
@@ -1563,7 +1565,7 @@ body {
     align-items: center;
     gap: 10px;
 
-    color: rgba(255,255,255,0.75);
+    color: #d946ef;
     font-size: 14px;
 }
 
@@ -1583,4 +1585,9 @@ body {
 
 .chart-wrapper {
     height: 420px;
+}
+
+.analytics-help {
+    flex-shrink: 0;
+    margin-top: 4px;
 }
