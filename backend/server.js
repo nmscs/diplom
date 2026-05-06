@@ -675,6 +675,97 @@ app.get(
   }
 );
 
+// AI ATTENTION PREDICTION
+
+app.get('/api/animations/:id/ai-attention', async (req, res) => {
+
+  try {
+
+    const animationId = req.params.id;
+
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM animation_events
+      WHERE animation_id = $1
+      ORDER BY created_at ASC
+      `,
+      [animationId]
+    );
+
+    const events = result.rows;
+
+    const scores = {};
+
+    for (const event of events) {
+
+      const second =
+        Math.floor(event.video_time || 0);
+
+      if (!scores[second]) {
+        scores[second] = 0;
+      }
+
+      switch (event.event_type) {
+
+        case 'pause':
+          scores[second] += 2;
+          break;
+
+        case 'seek':
+          scores[second] += 3;
+          break;
+
+        case 'speed_change':
+
+          if (event.playback_rate < 1) {
+            scores[second] += 2;
+          }
+
+          if (event.playback_rate > 1) {
+            scores[second] -= 1;
+          }
+
+          break;
+
+        case 'complete':
+          scores[second] += 5;
+          break;
+
+        case 'png_frame_view':
+          scores[second] += 4;
+          break;
+      }
+    }
+
+    // NORMALIZATION
+
+    const values = Object.values(scores);
+
+    const max =
+      Math.max(...values, 1);
+
+    const normalized =
+      Object.entries(scores).map(([second, score]) => ({
+
+        second: Number(second),
+
+        score:
+          Math.round((score / max) * 100)
+      }));
+
+    res.json(normalized);
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: 'AI attention error'
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Сервер запущен: http://localhost:${PORT}`);
 });

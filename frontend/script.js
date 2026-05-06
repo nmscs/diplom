@@ -1338,6 +1338,8 @@ async function setupViewerPage() {
 
     try {
 
+        // REAL USER DATA
+
         const analyticsRes = await fetch(
             `https://diplom-r1b8.onrender.com/api/animations/${id}/attention`
         );
@@ -1345,15 +1347,16 @@ async function setupViewerPage() {
         const analyticsData =
             await analyticsRes.json();
 
-        const labels =
-            analyticsData.map(
-                item => item.second
-            );
 
-        const scores =
-            analyticsData.map(
-                item => item.score
-            );
+        // AI PREDICTION DATA
+
+        const aiRes = await fetch(
+            `https://diplom-r1b8.onrender.com/api/animations/${id}/ai-attention`
+        );
+
+        const aiData =
+            await aiRes.json();
+
 
         const ctx =
             document
@@ -1367,19 +1370,55 @@ async function setupViewerPage() {
 
                 data: {
 
-                    labels,
-
                     datasets: [
+
+                        // REAL VIEWERS
+
                         {
-                            label: 'Viewer attention',
+                            label: 'Real viewer attention',
 
-                            data: scores,
+                            data: analyticsData.map(item => ({
+                                x: item.second,
+                                y: item.score
+                            })),
 
-                            tension: 0.35,
+                            borderColor: '#36a2eb',
+
+                            backgroundColor:
+                                'rgba(54,162,235,0.25)',
+
+                            fill: true,
+
+                            tension: 0.4,
 
                             borderWidth: 3,
 
-                            fill: true
+                            pointRadius: 4
+                        },
+
+
+                        // AI PREDICTION
+
+                        {
+                            label: 'AI predicted attention',
+
+                            data: aiData.map(item => ({
+                                x: item.second,
+                                y: item.score
+                            })),
+
+                            borderColor: '#d946ef',
+
+                            backgroundColor:
+                                'rgba(217,70,239,0.12)',
+
+                            fill: true,
+
+                            tension: 0.4,
+
+                            borderWidth: 3,
+
+                            pointRadius: 0
                         }
                     ]
                 },
@@ -1389,9 +1428,15 @@ async function setupViewerPage() {
                     responsive: true,
 
                     plugins: {
+
                         legend: {
+
                             labels: {
-                                color: 'white'
+                                color: '#c84fff',
+                                font: {
+                                    size: 14,
+                                    weight: '600'
+                                }
                             }
                         }
                     },
@@ -1399,36 +1444,40 @@ async function setupViewerPage() {
                     scales: {
 
                         x: {
+
+                            type: 'linear',
+
                             title: {
                                 display: true,
                                 text: 'Animation timeline (seconds)',
-                                color: '#ffffff'
+                                color: '#c84fff'
                             },
 
                             ticks: {
-                                color: 'rgba(255,255,255,0.7)'
+                                color: '#666'
                             },
 
                             grid: {
-                                color: 'rgba(255,255,255,0.05)'
+                                color: 'rgba(0,0,0,0.05)'
                             }
                         },
 
                         y: {
-                            title: {
-                                display: true,
-                                text: 'Viewer attention score',
-                                color: '#ffffff'
-                            },
 
                             beginAtZero: true,
 
+                            title: {
+                                display: true,
+                                text: 'Viewer attention score',
+                                color: '#c84fff'
+                            },
+
                             ticks: {
-                                color: 'rgba(255,255,255,0.7)'
+                                color: '#666'
                             },
 
                             grid: {
-                                color: 'rgba(255,255,255,0.05)'
+                                color: 'rgba(0,0,0,0.05)'
                             }
                         }
                     }
