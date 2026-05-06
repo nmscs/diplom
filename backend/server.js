@@ -9,6 +9,10 @@ import { fileURLToPath } from 'url';
 import multer from 'multer';
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegPath from 'ffmpeg-static';
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 dotenv.config();
 console.log("DATABASE_URL CHECK:", process.env.DATABASE_URL?.split("@")[0]);
@@ -297,6 +301,11 @@ app.post(
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *`,
         [title, description, videoPath, coverPath, framePaths, req.user.id]
+      );
+
+      generateAIAttention(
+        result.rows[0].id,
+        videoPath
       );
 
       res.json(result.rows[0]);
@@ -765,6 +774,122 @@ app.get('/api/animations/:id/ai-attention', async (req, res) => {
     });
   }
 });
+
+async function generateAIAttention(animationId, videoUrl) {
+
+  try {
+
+    const tempFolder =
+      path.join(__dirname, "temp");
+
+    if (!fs.existsSync(tempFolder)) {
+      fs.mkdirSync(tempFolder);
+    }
+
+    const outputPattern =
+      path.join(
+        tempFolder,
+        `frame-${animationId}-%03d.jpg`
+      );
+
+    await new Promise((resolve, reject) => {
+
+      ffmpeg(videoUrl)
+        .outputOptions([
+          "-vf fps=1"
+        ])
+        .output(outputPattern)
+        .on("end", resolve)
+        .on("error", reject)
+        .run();
+    });
+
+    const files =
+      fs.readdirSync(tempFolder)
+      .filter(f =>
+        f.startsWith(`frame-${animationId}`)
+      )
+      .sort();
+
+    let previousSize = null;
+
+    for (let i = 0; i < files.length; i++) {
+
+      const filePath =
+        path.join(tempFolder, files[i]);
+
+      const stats =
+        fs.statSync(filePath);
+
+      const currentSize =
+        stats.size;
+
+      let score = 0;
+
+      if (previousSize !== null) {
+
+        score =
+          Math.abs(currentSize - previousSize);
+      }
+
+      previousSize = currentSize;
+
+      await pool.query(
+        `
+        INSERT INTO animation_ai_attention
+        (animation_id, second, score)
+        VALUES ($1, $2, $3)
+        `,
+        [
+          animationId,
+          i,
+          Math.round(score / 100)
+        ]
+      );
+    }
+
+    console.log(
+      "AI attention generated:",
+      animationId
+    );
+
+  } catch (err) {
+
+    console.error(
+      "AI attention generation error:",
+      err
+    );
+  }
+}
+
+app.get(
+  '/api/animations/:id/ai-attention',
+  async (req, res) => {
+
+    try {
+
+      const result = await pool.query(
+        `
+        SELECT second, score
+        FROM animation_ai_attention
+        WHERE animation_id = $1
+        ORDER BY second ASC
+        `,
+        [req.params.id]
+      );
+
+      res.json(result.rows);
+
+    } catch (err) {
+
+      console.error(err);
+
+      res.status(500).json({
+        error: 'AI attention error'
+      });
+    }
+  }
+);
 
 app.listen(PORT, () => {
   console.log(`Сервер запущен: http://localhost:${PORT}`);
