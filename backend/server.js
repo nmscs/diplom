@@ -158,9 +158,25 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/animations', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT a.*, u.username as author_username 
-      FROM animations a 
-      JOIN users u ON a.author_id = u.id 
+      SELECT 
+        a.*,
+        u.username as author_username,
+
+        (
+          SELECT COUNT(*)
+          FROM animation_likes l
+          WHERE l.animation_id = a.id
+        )::int as likes_count,
+
+        (
+          SELECT COUNT(*)
+          FROM animation_views v
+          WHERE v.animation_id = a.id
+        )::int as views_count
+
+      FROM animations a
+      JOIN users u ON a.author_id = u.id
+
       ORDER BY a.created_at DESC
     `);
     res.json(result.rows);
@@ -173,11 +189,61 @@ app.get('/api/animations', async (req, res) => {
 app.get('/api/animations/:id', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT a.*, u.username as author_username FROM animations a JOIN users u ON a.author_id = u.id WHERE a.id = $1',
-      [req.params.id]
+    `
+    SELECT 
+      a.*,
+      u.username as author_username,
+
+      (
+        SELECT COUNT(*)
+        FROM animation_likes l
+        WHERE l.animation_id = a.id
+      )::int as likes_count,
+
+      (
+        SELECT COUNT(*)
+        FROM animation_views v
+        WHERE v.animation_id = a.id
+      )::int as views_count
+
+    FROM animations a
+    JOIN users u ON a.author_id = u.id
+
+    WHERE a.id = $1
+    `,
+    [req.params.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Не найдено' });
-    res.json(result.rows[0]);
+    const animation = result.rows[0];
+
+    if (!req.headers.authorization) {
+      return res.json(animation);
+    }
+
+    try {
+
+      const token =
+        req.headers.authorization.split(" ")[1];
+
+      const decoded =
+        jwt.verify(token, process.env.JWT_SECRET);
+
+      const likedResult = await pool.query(
+        `
+        SELECT *
+        FROM animation_likes
+        WHERE animation_id = $1
+        AND user_id = $2
+        `,
+        [req.params.id, decoded.id]
+      );
+
+      animation.liked =
+        likedResult.rows.length > 0;
+
+    } catch {}
+
+    res.json(animation);
   } catch (err) {
     res.status(500).json({ error: 'Ошибка сервера' });
   }
@@ -371,6 +437,87 @@ app.delete('/api/animations/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Ошибка удаления' });
+  }
+});
+
+// ЛАЙК / УБРАТЬ ЛАЙК
+
+app.post('/api/animations/:id/like', authMiddleware, async (req, res) => {
+
+  try {
+
+    const animationId = req.params.id;
+    const userId = req.user.id;
+
+    const existing = await pool.query(
+      `SELECT * FROM animation_likes
+       WHERE animation_id = $1 AND user_id = $2`,
+      [animationId, userId]
+    );
+
+    if (existing.rows.length > 0) {
+
+      await pool.query(
+        `DELETE FROM animation_likes
+         WHERE animation_id = $1 AND user_id = $2`,
+        [animationId, userId]
+      );
+
+      return res.json({
+        liked: false
+      });
+    }
+
+    await pool.query(
+      `INSERT INTO animation_likes
+       (animation_id, user_id)
+       VALUES ($1, $2)`,
+      [animationId, userId]
+    );
+
+    res.json({
+      liked: true
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: 'Like error'
+    });
+  }
+});
+
+// ПРОСМОТР
+
+app.post('/api/animations/:id/view', authMiddleware, async (req, res) => {
+
+  try {
+
+    const animationId = req.params.id;
+    const userId = req.user.id;
+
+    await pool.query(
+      `INSERT INTO animation_views
+       (animation_id, user_id)
+       VALUES ($1, $2)
+       ON CONFLICT (animation_id, user_id)
+       DO NOTHING`,
+      [animationId, userId]
+    );
+
+    res.json({
+      success: true
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: 'View error'
+    });
   }
 });
 

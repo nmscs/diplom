@@ -1075,6 +1075,10 @@ async function setupViewerPage() {
     const speedControl = document.getElementById("speedControl");
 
     const speedSelect = speedControl?.querySelector("select");
+    const likeBtn = document.getElementById("likeBtn");
+    const likesCount = document.getElementById("likesCount");
+    const likeIcon = document.getElementById("likeIcon");
+    const viewsCount = document.getElementById("viewsCount");
 
     speedSelect?.addEventListener("change", () => {
         const speed = parseFloat(speedSelect.value);
@@ -1085,7 +1089,21 @@ async function setupViewerPage() {
     let currentFrame = 0;
 
     try {
-        const res = await fetch(`https://diplom-r1b8.onrender.com/api/animations/${id}`);
+        const token = localStorage.getItem("token");
+
+        const headers = {};
+
+        if (token) {
+            headers.Authorization =
+                "Bearer " + token;
+        }
+
+        const res = await fetch(
+            `https://diplom-r1b8.onrender.com/api/animations/${id}`,
+            {
+                headers
+            }
+        );
         if (!res.ok) {
             alert("Animation not found");
             return;
@@ -1093,10 +1111,29 @@ async function setupViewerPage() {
 
         const anim = await res.json();
 
+        if (token) {
+
+            fetch(
+                `https://diplom-r1b8.onrender.com/api/animations/${id}/view`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    }
+                }
+            ).catch(console.error);
+        }
+
         titleEl.textContent = anim.title || "Untitled animation";
         authorEl.textContent = "@" + (anim.author_username || "unknown");
         authorEl.href = `profile.html?user=${anim.author_username}`;
         descEl.textContent = anim.description || "";
+        likesCount.textContent = anim.likes_count || 0;
+        viewsCount.textContent = anim.views_count || 0;
+        if (anim.liked) {
+            likeBtn.classList.add("liked");
+            likeIcon.textContent = "♥";
+        }
 
         if (anim.video_path) {
             videoEl.src = anim.video_path;
@@ -1183,6 +1220,58 @@ async function setupViewerPage() {
         updateFrame();
     });
 
+    likeBtn?.addEventListener("click", async () => {
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            alert("Sign in first");
+            return;
+        }
+
+        try {
+
+            const res = await fetch(
+                `https://diplom-r1b8.onrender.com/api/animations/${id}/like`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    }
+                }
+            );
+
+            const data = await res.json();
+
+            let currentLikes =
+                parseInt(likesCount.textContent);
+
+            if (data.liked) {
+
+                likeBtn.classList.add("liked");
+
+                likesCount.textContent =
+                    currentLikes + 1;
+
+                likeIcon.textContent = "♥";
+
+            } else {
+
+                likeBtn.classList.remove("liked");
+
+                likesCount.textContent =
+                    Math.max(0, currentLikes - 1);
+
+                likeIcon.textContent = "♡";
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert("Like error");
+        }
+    });
     showVideoMode(); // всегда сначала видео
 }
 
