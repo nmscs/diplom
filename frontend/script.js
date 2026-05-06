@@ -1078,7 +1078,6 @@ async function setupViewerPage() {
     const likeBtn = document.getElementById("likeBtn");
     const likesCount = document.getElementById("likesCount");
     const likeIcon = document.getElementById("likeIcon");
-    const likeIcon = document.getElementById("likeIcon");
     const viewsCount = document.getElementById("viewsCount");
 
     speedSelect?.addEventListener("change", () => {
@@ -1112,6 +1111,18 @@ async function setupViewerPage() {
 
         const anim = await res.json();
 
+        
+
+        titleEl.textContent = anim.title || "Untitled animation";
+        authorEl.textContent = "@" + (anim.author_username || "unknown");
+        authorEl.href = `profile.html?user=${anim.author_username}`;
+        descEl.textContent = anim.description || "";
+        likesCount.textContent = anim.likes_count || 0;
+        viewsCount.textContent = anim.views_count || 0;
+
+        let currentViews =
+            parseInt(anim.views_count || 0);
+
         if (token) {
 
             fetch(
@@ -1136,14 +1147,6 @@ async function setupViewerPage() {
             })
             .catch(console.error);
         }
-
-        titleEl.textContent = anim.title || "Untitled animation";
-        authorEl.textContent = "@" + (anim.author_username || "unknown");
-        authorEl.href = `profile.html?user=${anim.author_username}`;
-        descEl.textContent = anim.description || "";
-        likesCount.textContent = anim.likes_count || 0;
-        viewsCount.textContent = anim.views_count || 0;
-        let currentViews = parseInt(anim.views_count || 0);
         if (anim.liked) {
             likeBtn.classList.add("liked");
             likeIcon.textContent = "♥";
