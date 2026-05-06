@@ -1589,5 +1589,8 @@ body {
 
 .analytics-help {
     flex-shrink: 0;
-    margin-top: 4px;
+}
+
+.analytics-title {
+    margin: 0;
 }
