@@ -1399,14 +1399,36 @@ async function setupViewerPage() {
                     scales: {
 
                         x: {
+                            title: {
+                                display: true,
+                                text: 'Animation timeline (seconds)',
+                                color: '#ffffff'
+                            },
+
                             ticks: {
-                                color: 'white'
+                                color: 'rgba(255,255,255,0.7)'
+                            },
+
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
                             }
                         },
 
                         y: {
+                            title: {
+                                display: true,
+                                text: 'Viewer attention score',
+                                color: '#ffffff'
+                            },
+
+                            beginAtZero: true,
+
                             ticks: {
-                                color: 'white'
+                                color: 'rgba(255,255,255,0.7)'
+                            },
+
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
                             }
                         }
                     }

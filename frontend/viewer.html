@@ -93,14 +93,57 @@
 
         <div class="analytics-section">
 
-            <h2 class="analytics-title">
-                Viewer attention analytics
-            </h2>
+        <div class="analytics-header">
 
-            <canvas id="attentionChart"></canvas>
+            <div class="analytics-title-wrapper">
+
+                <h2 class="analytics-title">
+                    Viewer attention analytics
+                </h2>
+
+                <div class="analytics-help">
+                    ?
+                    
+                    <div class="analytics-tooltip">
+                        This graph visualizes viewer attention throughout the animation.
+
+                        The system analyzes:
+                        • pauses and rewatches
+                        • playback speed changes
+                        • repeated viewing of specific moments
+                        • interaction intensity during playback
+
+                        Higher values indicate increased viewer attention.
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="analytics-legend">
+
+                <div class="legend-item">
+                    <div class="legend-color real"></div>
+                    <span>Real viewer attention</span>
+                </div>
+
+                <!-- В будущем -->
+                <!--
+                <div class="legend-item">
+                    <div class="legend-color ai"></div>
+                    <span>AI predicted attention</span>
+                </div>
+                -->
+
+            </div>
 
         </div>
-        
+
+        <div class="chart-wrapper">
+            <canvas id="attentionChart"></canvas>
+        </div>
+
+    </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

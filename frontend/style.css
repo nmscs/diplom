@@ -1454,3 +1454,133 @@ body {
     width: 100%;
     max-height: 400px;
 }
+
+/* ANALYTICS */
+
+.analytics-section {
+    margin-top: 80px;
+    padding: 40px;
+    border-radius: 24px;
+
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+
+    backdrop-filter: blur(20px);
+}
+
+.analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 30px;
+    margin-bottom: 35px;
+}
+
+.analytics-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.analytics-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #d946ef;
+}
+
+.analytics-help {
+    position: relative;
+
+    width: 30px;
+    height: 30px;
+
+    border-radius: 50%;
+
+    background: rgba(217,70,239,0.15);
+    border: 1px solid rgba(217,70,239,0.3);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: 700;
+    font-size: 15px;
+
+    color: #d946ef;
+
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.analytics-help:hover {
+    background: rgba(217,70,239,0.22);
+}
+
+.analytics-tooltip {
+    position: absolute;
+    top: 42px;
+    left: 0;
+
+    width: 340px;
+
+    padding: 18px;
+
+    border-radius: 16px;
+
+    background: #161616;
+    border: 1px solid rgba(255,255,255,0.08);
+
+    color: rgba(255,255,255,0.8);
+
+    font-size: 14px;
+    line-height: 1.6;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transform: translateY(8px);
+
+    transition: 0.2s;
+
+    z-index: 20;
+}
+
+.analytics-help:hover .analytics-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.analytics-legend {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    color: rgba(255,255,255,0.75);
+    font-size: 14px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 6px;
+}
+
+.legend-color.real {
+    background: #36a2eb;
+}
+
+.legend-color.ai {
+    background: #ff6384;
+}
+
+.chart-wrapper {
+    height: 420px;
+}
