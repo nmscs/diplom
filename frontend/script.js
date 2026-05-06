@@ -1334,6 +1334,94 @@ async function setupViewerPage() {
         );
     });
 
+    // LOAD ATTENTION ANALYTICS
+
+    try {
+
+        const analyticsRes = await fetch(
+            `https://diplom-r1b8.onrender.com/api/animations/${id}/attention`
+        );
+
+        const analyticsData =
+            await analyticsRes.json();
+
+        const labels =
+            analyticsData.map(
+                item => item.second
+            );
+
+        const scores =
+            analyticsData.map(
+                item => item.score
+            );
+
+        const ctx =
+            document
+            .getElementById("attentionChart");
+
+        if (ctx) {
+
+            new Chart(ctx, {
+
+                type: 'line',
+
+                data: {
+
+                    labels,
+
+                    datasets: [
+                        {
+                            label: 'Viewer attention',
+
+                            data: scores,
+
+                            tension: 0.35,
+
+                            borderWidth: 3,
+
+                            fill: true
+                        }
+                    ]
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    },
+
+                    scales: {
+
+                        x: {
+                            ticks: {
+                                color: 'white'
+                            }
+                        },
+
+                        y: {
+                            ticks: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+    } catch (err) {
+
+        console.error(
+            "Analytics chart error:",
+            err
+        );
+    }
+
     showVideoMode(); // всегда сначала видео
 }
 
