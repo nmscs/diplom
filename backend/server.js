@@ -446,6 +446,7 @@ app.post('/api/animations/:id/like', authMiddleware, async (req, res) => {
   try {
     const animationId = req.params.id;
     const userId = req.user.id;
+    console.log("LIKE USER:", userId);
 
     const existing = await pool.query(
       `SELECT id FROM animation_likes
@@ -498,6 +499,7 @@ app.post('/api/animations/:id/view', authMiddleware, async (req, res) => {
   try {
     const animationId = req.params.id;
     const userId = req.user.id;
+    console.log("VIEW USER:", userId);
 
     await pool.query(
       `INSERT INTO animation_views (animation_id, user_id)
