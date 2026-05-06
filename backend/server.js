@@ -584,6 +584,97 @@ app.post(
   }
 );
 
+// ATTENTION ANALYTICS
+
+app.get(
+  '/api/animations/:id/attention',
+  async (req, res) => {
+
+    try {
+
+      const animationId = req.params.id;
+
+      const result = await pool.query(
+        `
+        SELECT
+          event_type,
+          video_time,
+          playback_rate
+        FROM animation_events
+        WHERE animation_id = $1
+        ORDER BY created_at ASC
+        `,
+        [animationId]
+      );
+
+      const heatmap = {};
+
+      for (const event of result.rows) {
+
+        if (
+          event.video_time === null ||
+          event.video_time === undefined
+        ) continue;
+
+        const second =
+          Math.floor(event.video_time);
+
+        if (!heatmap[second]) {
+          heatmap[second] = 0;
+        }
+
+        switch (event.event_type) {
+
+          case 'pause':
+            heatmap[second] += 3;
+            break;
+
+          case 'seek':
+            heatmap[second] += 5;
+            break;
+
+          case 'complete':
+            heatmap[second] += 10;
+            break;
+
+          case 'speed_change':
+
+            if (event.playback_rate < 1) {
+              heatmap[second] += 6;
+            }
+
+            if (event.playback_rate > 1) {
+              heatmap[second] -= 2;
+            }
+
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      const graphData =
+        Object.entries(heatmap)
+        .map(([second, score]) => ({
+          second: Number(second),
+          score
+        }))
+        .sort((a, b) => a.second - b.second);
+
+      res.json(graphData);
+
+    } catch (err) {
+
+      console.error(err);
+
+      res.status(500).json({
+        error: 'Attention analytics error'
+      });
+    }
+  }
+);
+
 app.listen(PORT, () => {
   console.log(`Сервер запущен: http://localhost:${PORT}`);
 });
