@@ -1274,6 +1274,66 @@ async function setupViewerPage() {
             alert("Like error");
         }
     });
+
+    // PLAY
+    videoEl?.addEventListener("play", () => {
+
+        sendAnalyticsEvent(
+            id,
+            "play",
+            videoEl.currentTime,
+            videoEl.playbackRate
+        );
+    });
+
+    // PAUSE
+
+    videoEl?.addEventListener("pause", () => {
+
+        sendAnalyticsEvent(
+            id,
+            "pause",
+            videoEl.currentTime,
+            videoEl.playbackRate
+        );
+    });
+
+    // SEEK
+
+    videoEl?.addEventListener("seeked", () => {
+
+        sendAnalyticsEvent(
+            id,
+            "seek",
+            videoEl.currentTime,
+            videoEl.playbackRate
+        );
+    });
+
+    // VIDEO COMPLETE
+
+    videoEl?.addEventListener("ended", () => {
+
+        sendAnalyticsEvent(
+            id,
+            "complete",
+            videoEl.duration,
+            videoEl.playbackRate
+        );
+    });
+
+    // SPEED CHANGE
+
+    speedSelect?.addEventListener("change", () => {
+
+        sendAnalyticsEvent(
+            id,
+            "speed_change",
+            videoEl.currentTime,
+            parseFloat(speedSelect.value)
+        );
+    });
+
     showVideoMode(); // всегда сначала видео
 }
 
@@ -1519,6 +1579,45 @@ async function login(username, password) {
   localStorage.setItem('user', JSON.stringify(data.user));
 
   location.reload();
+}
+
+async function sendAnalyticsEvent(
+    animationId,
+    eventType,
+    videoTime = null,
+    playbackRate = 1,
+    metadata = {}
+) {
+
+    const token = localStorage.getItem("token");
+
+    if (!token) return;
+
+    try {
+
+        await fetch(
+            `https://diplom-r1b8.onrender.com/api/animations/${animationId}/event`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+
+                body: JSON.stringify({
+                    event_type: eventType,
+                    video_time: videoTime,
+                    playback_rate: playbackRate,
+                    metadata
+                })
+            }
+        );
+
+    } catch (err) {
+
+        console.error("Analytics event error:", err);
+    }
 }
 
 function requireAuth(redirect = "index.html?auth=signin") {

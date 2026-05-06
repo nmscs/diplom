@@ -526,6 +526,64 @@ app.post('/api/animations/:id/view', authMiddleware, async (req, res) => {
   }
 });
 
+// TELEMETRY EVENTS
+
+app.post(
+  '/api/animations/:id/event',
+  authMiddleware,
+  async (req, res) => {
+
+    try {
+
+      const animationId = req.params.id;
+
+      const userId = req.user.id;
+
+      const {
+        event_type,
+        video_time,
+        playback_rate,
+        metadata
+      } = req.body;
+
+      await pool.query(
+        `
+        INSERT INTO animation_events
+        (
+          animation_id,
+          user_id,
+          event_type,
+          video_time,
+          playback_rate,
+          metadata
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+        `,
+        [
+          animationId,
+          userId,
+          event_type,
+          video_time || null,
+          playback_rate || 1,
+          metadata || {}
+        ]
+      );
+
+      res.json({
+        success: true
+      });
+
+    } catch (err) {
+
+      console.error("EVENT ERROR:", err);
+
+      res.status(500).json({
+        error: 'Event error'
+      });
+    }
+  }
+);
+
 app.listen(PORT, () => {
   console.log(`Сервер запущен: http://localhost:${PORT}`);
 });
