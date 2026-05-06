@@ -819,13 +819,8 @@ async function setupUploadPage() {
 
                 if (xhr.status >= 200 && xhr.status < 300) {
 
-                    uploadStatusText.textContent =
-                        "Processing animation...";
-
-                    setTimeout(() => {
-                        location.href =
-                            `profile.html?user=${currentUser}`;
-                    }, 700);
+                    location.href =
+                        `profile.html?user=${currentUser}`;
 
                 } else {
 

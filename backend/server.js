@@ -212,16 +212,20 @@ app.post(
         return res.status(400).json({ error: 'Video and cover required' });
       }
 
+      console.log("Uploading video...");
       const videoPath = await uploadToSupabase(video, 'videos');
+      console.log("Uploading cover...");
       const coverPath = await uploadToSupabase(cover, 'covers');
 
       const framePaths = [];
 
+      console.log("Uploading frames...");
       for (const frame of frames) {
         const frameUrl = await uploadToSupabase(frame, 'frames');
         framePaths.push(frameUrl);
       }
 
+      console.log("Saving animation to database...");
       const result = await pool.query(
         `INSERT INTO animations (title, description, video_path, cover_path, frames, author_id)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -357,23 +361,10 @@ app.delete('/api/animations/:id', authMiddleware, async (req, res) => {
     }
 
     // удаляем файлы
-    const deleteFile = (filePath) => {
-      if (!filePath) return;
-      const fullPath = path.join(__dirname, '..', filePath);
-      if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath);
-      }
-    };
-
-    // удаляем только из базы
-    await pool.query('DELETE FROM animations WHERE id = $1', [id]);
-
-    if (anim.frames && anim.frames.length) {
-      anim.frames.forEach(frame => deleteFile(frame));
-    }
-
-    // удаляем из базы
-    await pool.query('DELETE FROM animations WHERE id = $1', [id]);
+    await pool.query(
+      'DELETE FROM animations WHERE id = $1',
+      [id]
+    );
 
     res.json({ success: true });
 
