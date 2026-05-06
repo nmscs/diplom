@@ -33,7 +33,12 @@ const uploadDir = path.join(__dirname, 'uploads');
   }
 });
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 500 * 1024 * 1024
+  }
+});
 
 // Настройки
 app.use(cors());

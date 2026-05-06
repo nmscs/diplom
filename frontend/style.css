@@ -1333,3 +1333,34 @@ body {
     color: #ff6b6b;
 }
 
+.upload-status {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.upload-status.hidden {
+    display: none;
+}
+
+.upload-status-text {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: white;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.upload-progress {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.upload-progress-bar {
+    width: 0%;
+    height: 100%;
+    background: white;
+    border-radius: 999px;
+    transition: width 0.2s ease;
+}

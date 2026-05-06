@@ -568,6 +568,9 @@ async function setupUploadPage() {
 
 
     const saveBtn = document.getElementById("saveAnimationBtn");
+    const uploadStatus = document.getElementById("uploadStatus");
+    const uploadProgressBar = document.getElementById("uploadProgressBar");
+    const uploadStatusText = document.querySelector(".upload-status-text");
 
     const mp4ProgressBox = document.getElementById("mp4ProgressBox");
     const mp4Progress = document.getElementById("mp4Progress");
@@ -713,6 +716,8 @@ async function setupUploadPage() {
     /* СОХРАНЕНИЕ */
 
     saveBtn.onclick = async () => {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Uploading...";
 
         const name = nameInput.value.trim();
 
@@ -778,23 +783,74 @@ async function setupUploadPage() {
                 formData.append("cover", thumbnail, "cover.webp");
             }
 
-            const res = await fetch("https://diplom-r1b8.onrender.com/api/animations", {
-                method: "POST",
-                headers: {
-                    "Authorization": "Bearer " + token
-                },
-                body: formData
-            });
+            uploadStatus.classList.remove("hidden");
 
-            const result = await res.json();
+            const xhr = new XMLHttpRequest();
 
-            if (!res.ok) {
-                console.error("UPLOAD ERROR:", result);
-                alert(result.error || "Upload failed");
-                return;
-            }
+            xhr.open(
+                "POST",
+                "https://diplom-r1b8.onrender.com/api/animations"
+            );
 
-            location.href = `profile.html?user=${currentUser}`;
+            xhr.setRequestHeader(
+                "Authorization",
+                "Bearer " + token
+            );
+
+            xhr.upload.onprogress = (e) => {
+
+                if (!e.lengthComputable) return;
+
+                const percent = Math.round((e.loaded / e.total) * 100);
+
+                uploadProgressBar.style.width = percent + "%";
+
+                uploadStatusText.textContent =
+                    `Uploading... ${percent}%`;
+            };
+
+            xhr.onload = () => {
+
+                let result = {};
+
+                try {
+                    result = JSON.parse(xhr.responseText);
+                } catch {}
+
+                if (xhr.status >= 200 && xhr.status < 300) {
+
+                    uploadStatusText.textContent =
+                        "Processing animation...";
+
+                    setTimeout(() => {
+                        location.href =
+                            `profile.html?user=${currentUser}`;
+                    }, 700);
+
+                } else {
+
+                    console.error("UPLOAD ERROR:", result);
+
+                    alert(result.error || "Upload failed");
+
+                    uploadStatus.classList.add("hidden");
+
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = "Save animation";
+                }
+            };
+
+            xhr.onerror = () => {
+
+                alert("Connection error");
+
+                uploadStatus.classList.add("hidden");
+
+                saveBtn.disabled = false;
+                saveBtn.textContent = "Save animation";
+            };
+
+            xhr.send(formData);
 
         } catch (e) {
             alert("Ошибка соединения с сервером");
