@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import multer from 'multer';
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
-import Jimp from 'jimp';
+import { Jimp } from 'jimp';
 
 
 dotenv.config();
