@@ -279,16 +279,16 @@ function handleSignUp() {
         }
 
         
-        localStorage.setItem("user", JSON.stringify(data));
         localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
 
-        currentUser = data.username;
+        currentUser = data.user.username;
 
         registerModal?.classList.add("hidden");
         updateProfileButton();
         updateSignoutVisibility();
 
-        window.location.href = "profile.html";
+        window.location.href = `profile.html?user=${currentUser}`;
     });
 
 }
@@ -355,7 +355,7 @@ if (openEditModal && editProfileModal) {
 
         // 🔥 дефолтная аватарка
         if (backendUser.avatar) {
-            editAvatarPreview.src = `https://diplom-r1b8.onrender.com${backendUser.avatar}`;
+            editAvatarPreview.src = backendUser.avatar;
         } else {
             editAvatarPreview.src = "images/default-avatar.png";
         }
@@ -788,6 +788,11 @@ async function setupUploadPage() {
 
             const result = await res.json();
 
+            if (!res.ok) {
+                console.error("UPLOAD ERROR:", result);
+                alert(result.error || "Upload failed");
+                return;
+            }
 
             location.href = `profile.html?user=${currentUser}`;
 
@@ -849,16 +854,12 @@ async function setupProfilePage() {
 
 
     if (userProfile.avatar) {
-        avatarPreview.src = `https://diplom-r1b8.onrender.com${userProfile.avatar}`;
-        avatarPreview.style.display = "block";
+    avatarPreview.src = userProfile.avatar;
     } else {
-        if (userProfile.avatar) {
-            avatarPreview.src = `https://diplom-r1b8.onrender.com${userProfile.avatar}`;
-        } else {
-            avatarPreview.src = "images/default-avatar.png";
-        }
-        avatarPreview.style.display = "block";
+        avatarPreview.src = "images/default-avatar.png";
     }
+
+    avatarPreview.style.display = "block";
 
 
 
