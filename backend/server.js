@@ -9,10 +9,8 @@ import { fileURLToPath } from 'url';
 import multer from 'multer';
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
-import ffmpeg from 'fluent-ffmpeg';
-import ffmpegPath from 'ffmpeg-static';
+import Jimp from 'jimp';
 
-ffmpeg.setFfmpegPath(ffmpegPath);
 
 dotenv.config();
 console.log("DATABASE_URL CHECK:", process.env.DATABASE_URL?.split("@")[0]);
@@ -305,7 +303,7 @@ app.post(
 
       generateAIAttention(
         result.rows[0].id,
-        videoPath
+        framePaths
       );
 
       res.json(result.rows[0]);
@@ -686,153 +684,51 @@ app.get(
 
 // AI ATTENTION PREDICTION
 
-app.get('/api/animations/:id/ai-attention', async (req, res) => {
-
+async function generateAIAttention(animationId, frameUrls) {
   try {
+    if (!frameUrls || frameUrls.length < 2) {
+      console.log("Not enough frames for AI analysis");
+      return;
+    }
 
-    const animationId = req.params.id;
-
-    const result = await pool.query(
-      `
-      SELECT *
-      FROM animation_events
-      WHERE animation_id = $1
-      ORDER BY created_at ASC
-      `,
+    await pool.query(
+      `DELETE FROM animation_ai_attention WHERE animation_id = $1`,
       [animationId]
     );
 
-    const events = result.rows;
+    const step = Math.max(1, Math.floor(frameUrls.length / 60));
 
-    const scores = {};
+    let previousImage = null;
+    let second = 0;
 
-    for (const event of events) {
+    for (let i = 0; i < frameUrls.length; i += step) {
+      const image = await Jimp.read(frameUrls[i]);
 
-      const second =
-        Math.floor(event.video_time || 0);
-
-      if (!scores[second]) {
-        scores[second] = 0;
-      }
-
-      switch (event.event_type) {
-
-        case 'pause':
-          scores[second] += 2;
-          break;
-
-        case 'seek':
-          scores[second] += 3;
-          break;
-
-        case 'speed_change':
-
-          if (event.playback_rate < 1) {
-            scores[second] += 2;
-          }
-
-          if (event.playback_rate > 1) {
-            scores[second] -= 1;
-          }
-
-          break;
-
-        case 'complete':
-          scores[second] += 5;
-          break;
-
-        case 'png_frame_view':
-          scores[second] += 4;
-          break;
-      }
-    }
-
-    // NORMALIZATION
-
-    const values = Object.values(scores);
-
-    const max =
-      Math.max(...values, 1);
-
-    const normalized =
-      Object.entries(scores).map(([second, score]) => ({
-
-        second: Number(second),
-
-        score:
-          Math.round((score / max) * 100)
-      }));
-
-    res.json(normalized);
-
-  } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({
-      error: 'AI attention error'
-    });
-  }
-});
-
-async function generateAIAttention(animationId, videoUrl) {
-
-  try {
-
-    const tempFolder =
-      path.join(__dirname, "temp");
-
-    if (!fs.existsSync(tempFolder)) {
-      fs.mkdirSync(tempFolder);
-    }
-
-    const outputPattern =
-      path.join(
-        tempFolder,
-        `frame-${animationId}-%03d.jpg`
-      );
-
-    await new Promise((resolve, reject) => {
-
-      ffmpeg(videoUrl)
-        .outputOptions([
-          "-vf fps=1"
-        ])
-        .output(outputPattern)
-        .on("end", resolve)
-        .on("error", reject)
-        .run();
-    });
-
-    const files =
-      fs.readdirSync(tempFolder)
-      .filter(f =>
-        f.startsWith(`frame-${animationId}`)
-      )
-      .sort();
-
-    let previousSize = null;
-
-    for (let i = 0; i < files.length; i++) {
-
-      const filePath =
-        path.join(tempFolder, files[i]);
-
-      const stats =
-        fs.statSync(filePath);
-
-      const currentSize =
-        stats.size;
+      image.resize(64, 64).grayscale();
 
       let score = 0;
 
-      if (previousSize !== null) {
+      if (previousImage) {
+        let diff = 0;
 
-        score =
-          Math.abs(currentSize - previousSize);
+        for (let y = 0; y < 64; y++) {
+          for (let x = 0; x < 64; x++) {
+            const currentPixel = Jimp.intToRGBA(
+              image.getPixelColor(x, y)
+            ).r;
+
+            const previousPixel = Jimp.intToRGBA(
+              previousImage.getPixelColor(x, y)
+            ).r;
+
+            diff += Math.abs(currentPixel - previousPixel);
+          }
+        }
+
+        const maxDiff = 64 * 64 * 255;
+
+        score = Math.round((diff / maxDiff) * 100);
       }
-
-      previousSize = currentSize;
 
       await pool.query(
         `
@@ -840,30 +736,21 @@ async function generateAIAttention(animationId, videoUrl) {
         (animation_id, second, score)
         VALUES ($1, $2, $3)
         `,
-        [
-          animationId,
-          i,
-          Math.round(score / 100)
-        ]
+        [animationId, second, score]
       );
+
+      previousImage = image;
+      second++;
     }
 
-    console.log(
-      "AI attention generated:",
-      animationId
-    );
+    console.log("AI frame attention generated:", animationId);
 
   } catch (err) {
-
-    console.error(
-      "AI attention generation error:",
-      err
-    );
+    console.error("AI attention generation error:", err);
   }
 }
 
-app.get(
-  '/api/animations/:id/ai-attention',
+app.get('/api/animations/:id/ai-attention',
   async (req, res) => {
 
     try {
