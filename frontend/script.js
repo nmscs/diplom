@@ -1270,7 +1270,7 @@ async function setupViewerPage() {
                 likeIcon.textContent = "♥";
 
                 likesCount.textContent =
-                    currentLikes + 1;
+                    Number(likesCount.textContent) + 1;
 
             } else {
 
@@ -1279,7 +1279,10 @@ async function setupViewerPage() {
                 likeIcon.textContent = "♡";
 
                 likesCount.textContent =
-                    Math.max(0, currentLikes - 1);
+                    Math.max(
+                        0,
+                        Number(likesCount.textContent) - 1
+                    );
             }
 
         } catch (err) {
