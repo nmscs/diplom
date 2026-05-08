@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import multer from 'multer';
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
-import { Jimp } from 'jimp';
+import { Jimp, intToRGBA } from 'jimp';
 
 
 dotenv.config();
@@ -724,11 +724,11 @@ async function generateAIAttention(animationId, frameUrls) {
 
         for (let y = 0; y < 64; y++) {
           for (let x = 0; x < 64; x++) {
-            const currentPixel = Jimp.intToRGBA(
+            const currentPixel = intToRGBA(
               image.getPixelColor(x, y)
             ).r;
 
-            const previousPixel = Jimp.intToRGBA(
+            const previousPixel = intToRGBA(
               previousImage.getPixelColor(x, y)
             ).r;
 
