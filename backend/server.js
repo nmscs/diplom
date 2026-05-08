@@ -757,7 +757,9 @@ async function generateAIAttention(animationId, frameUrls) {
     console.log("AI frame attention generated:", animationId);
 
   } catch (err) {
-    console.error("AI attention generation error:", err);
+    console.error("AI attention generation error:");
+    console.error(err);
+    console.error(err?.stack);
   }
 }
 
