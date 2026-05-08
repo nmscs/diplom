@@ -301,7 +301,7 @@ app.post(
         [title, description, videoPath, coverPath, framePaths, req.user.id]
       );
 
-      generateAIAttention(
+      await generateAIAttention(
         result.rows[0].id,
         framePaths
       );
@@ -710,7 +710,12 @@ async function generateAIAttention(animationId, frameUrls) {
 
       const image = await Jimp.read(buffer);
 
-      image.resize(64, 64).grayscale();
+      await image.resize({
+        width: 64,
+        height: 64
+      });
+
+      await image.greyscale();
 
       let score = 0;
 
