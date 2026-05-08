@@ -1367,6 +1367,36 @@ async function setupViewerPage() {
             await aiRes.json();
 
 
+        function normalizeChartData(data) {
+            if (!data.length) return [];
+
+            const maxScore = Math.max(
+                ...data.map(item => Number(item.score) || 0),
+                1
+            );
+
+            return data.map(item => ({
+                x: Number(item.second),
+                y: Math.round((Number(item.score) / maxScore) * 100)
+            }));
+        }
+
+        const videoDuration =
+            videoEl.duration || Math.max(
+                ...analyticsData.map(item => Number(item.second) || 0),
+                ...aiData.map(item => Number(item.second) || 0),
+                1
+            );
+
+        let realChartData = normalizeChartData(analyticsData);
+        let aiChartData = normalizeChartData(aiData);
+
+        realChartData.unshift({ x: 0, y: 0 });
+        realChartData.push({ x: videoDuration, y: 0 });
+
+        aiChartData.unshift({ x: 0, y: 0 });
+        aiChartData.push({ x: videoDuration, y: 0 });
+
         const ctx =
             document
             .getElementById("attentionChart");
@@ -1386,10 +1416,7 @@ async function setupViewerPage() {
                         {
                             label: 'Real viewer attention',
 
-                            data: analyticsData.map(item => ({
-                                x: item.second,
-                                y: item.score
-                            })),
+                            data: realChartData,
 
                             borderColor: '#36a2eb',
 
@@ -1411,10 +1438,7 @@ async function setupViewerPage() {
                         {
                             label: 'AI predicted attention',
 
-                            data: aiData.map(item => ({
-                                x: item.second,
-                                y: item.score
-                            })),
+                            data: aiChartData,
 
                             borderColor: '#d946ef',
 
@@ -1456,6 +1480,9 @@ async function setupViewerPage() {
 
                             type: 'linear',
 
+                            min: 0,
+                            max: videoDuration,
+
                             title: {
                                 display: true,
                                 text: 'Animation timeline (seconds)',
@@ -1474,6 +1501,7 @@ async function setupViewerPage() {
                         y: {
 
                             beginAtZero: true,
+                            max: 100,
 
                             title: {
                                 display: true,
