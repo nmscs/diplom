@@ -711,8 +711,8 @@ async function generateAIAttention(animationId, frameUrls) {
       const image = await Jimp.read(buffer);
 
       await image.resize({
-        width: 64,
-        height: 64
+          w: 64,
+          h: 64
       });
 
       await image.greyscale();
