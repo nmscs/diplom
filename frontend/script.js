@@ -1390,12 +1390,33 @@ async function setupViewerPage() {
 
         let realChartData = normalizeChartData(analyticsData);
         let aiChartData = normalizeChartData(aiData);
+        if (realChartData.length) {
 
-        realChartData.unshift({ x: 0, y: 0 });
-        realChartData.push({ x: videoDuration, y: 0 });
+            const last =
+                realChartData[realChartData.length - 1];
 
-        aiChartData.unshift({ x: 0, y: 0 });
-        aiChartData.push({ x: videoDuration, y: 0 });
+            realChartData.push({
+                x: videoDuration,
+                y: last.y * 0.15
+            });
+        }
+
+        if (aiChartData.length) {
+
+            const last =
+                aiChartData[aiChartData.length - 1];
+
+            aiChartData.push({
+                x: videoDuration,
+                y: last.y * 0.15
+            });
+        }
+
+        //realChartData.unshift({ x: 0, y: 0 });
+        //realChartData.push({ x: videoDuration, y: 0 });
+
+        //aiChartData.unshift({ x: 0, y: 0 });
+        //aiChartData.push({ x: videoDuration, y: 0 });
 
         const ctx =
             document
@@ -1425,7 +1446,8 @@ async function setupViewerPage() {
 
                             fill: true,
 
-                            tension: 0.4,
+                            cubicInterpolationMode: 'monotone',
+                            tension: 0.25,
 
                             borderWidth: 3,
 
@@ -1447,7 +1469,8 @@ async function setupViewerPage() {
 
                             fill: true,
 
-                            tension: 0.4,
+                            cubicInterpolationMode: 'monotone',
+                            tension: 0.25,
 
                             borderWidth: 3,
 
