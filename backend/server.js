@@ -702,7 +702,13 @@ async function generateAIAttention(animationId, frameUrls) {
     let second = 0;
 
     for (let i = 0; i < frameUrls.length; i += step) {
-      const image = await Jimp.read(frameUrls[i]);
+      const response = await fetch(frameUrls[i]);
+
+      const arrayBuffer = await response.arrayBuffer();
+
+      const buffer = Buffer.from(arrayBuffer);
+
+      const image = await Jimp.read(buffer);
 
       image.resize(64, 64).grayscale();
 
