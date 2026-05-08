@@ -266,7 +266,7 @@ app.post(
     console.log("BODY:", req.body);
 
     try {
-      const { title, description } = req.body;
+      const { title, description, duration } = req.body;
 
       if (!title) {
         return res.status(400).json({ error: 'Title required' });
@@ -303,7 +303,8 @@ app.post(
 
       await generateAIAttention(
         result.rows[0].id,
-        framePaths
+        framePaths,
+        Number(duration)
       );
 
       res.json(result.rows[0]);
@@ -684,7 +685,9 @@ app.get(
 
 // AI ATTENTION PREDICTION
 
-async function generateAIAttention(animationId, frameUrls) {
+async function generateAIAttention(animationId,
+  frameUrls,
+  duration) {
   try {
     if (!frameUrls || frameUrls.length < 2) {
       console.log("Not enough frames for AI analysis");
@@ -699,7 +702,6 @@ async function generateAIAttention(animationId, frameUrls) {
     const step = Math.max(1, Math.floor(frameUrls.length / 60));
 
     let previousImage = null;
-    let second = 0;
 
     for (let i = 0; i < frameUrls.length; i += step) {
       const response = await fetch(frameUrls[i]);
@@ -741,6 +743,9 @@ async function generateAIAttention(animationId, frameUrls) {
         score = Math.round((diff / maxDiff) * 100);
       }
 
+      const second =
+      Math.round((i / frameUrls.length) * duration);
+
       await pool.query(
         `
         INSERT INTO animation_ai_attention
@@ -751,7 +756,6 @@ async function generateAIAttention(animationId, frameUrls) {
       );
 
       previousImage = image;
-      second++;
     }
 
     console.log("AI frame attention generated:", animationId);

@@ -775,6 +775,15 @@ async function setupUploadPage() {
 
             formData.append("video", loadedMP4);
 
+            const tempVideo = document.createElement("video");
+            tempVideo.src = URL.createObjectURL(loadedMP4);
+
+            await new Promise(resolve => {
+                tempVideo.onloadedmetadata = resolve;
+            });
+
+            formData.append("duration", tempVideo.duration);
+
             loadedPNGs.forEach(file => {
                 formData.append("frames", file);
             });
