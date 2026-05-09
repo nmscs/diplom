@@ -683,6 +683,69 @@ app.get(
   }
 );
 
+// PNG ATTENTION ANALYTICS
+
+app.get(
+  '/api/animations/:id/png-attention',
+  async (req, res) => {
+
+    try {
+
+      const animationId = req.params.id;
+
+      const result = await pool.query(
+        `
+        SELECT
+          video_time
+        FROM animation_events
+        WHERE animation_id = $1
+        AND event_type = 'png_frame_view'
+        ORDER BY created_at ASC
+        `,
+        [animationId]
+      );
+
+      const heatmap = {};
+
+      for (const event of result.rows) {
+
+        if (
+          event.video_time === null ||
+          event.video_time === undefined
+        ) continue;
+
+        const second =
+          Math.floor(event.video_time);
+
+        if (!heatmap[second]) {
+          heatmap[second] = 0;
+        }
+
+        heatmap[second] += 4;
+      }
+
+      const graphData =
+        Object.entries(heatmap)
+        .map(([second, score]) => ({
+          second: Number(second),
+          score
+        }))
+        .sort((a, b) => a.second - b.second);
+
+      res.json(graphData);
+
+    } catch (err) {
+
+      console.error("PNG attention error:", err);
+
+      res.status(500).json({
+        error: 'PNG attention analytics error'
+      });
+    }
+  }
+);
+
+
 // AI ATTENTION PREDICTION
 
 async function generateAIAttention(animationId,

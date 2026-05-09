@@ -1175,6 +1175,25 @@ async function setupViewerPage() {
 
         imgEl.src = frames[currentFrame];
         frameCounter.textContent = `${currentFrame + 1} / ${frames.length}`;
+
+        const duration =
+            videoEl.duration || frames.length;
+
+        const pngTime =
+            frames.length > 1
+                ? (currentFrame / (frames.length - 1)) * duration
+                : 0;
+
+        sendAnalyticsEvent(
+            id,
+            "png_frame_view",
+            pngTime,
+            1,
+            {
+                frame: currentFrame,
+                total_frames: frames.length
+            }
+        );
     }
 
     function showVideoMode() {
@@ -1366,6 +1385,15 @@ async function setupViewerPage() {
         const aiData =
             await aiRes.json();
 
+        // PNG VIEWER DATA
+
+        const pngRes = await fetch(
+            `https://diplom-r1b8.onrender.com/api/animations/${id}/png-attention`
+        );
+
+        const pngData =
+            await pngRes.json();
+        
 
         function normalizeChartData(data) {
             if (!data.length) return [];
@@ -1390,6 +1418,7 @@ async function setupViewerPage() {
 
         let realChartData = normalizeChartData(analyticsData);
         let aiChartData = normalizeChartData(aiData);
+        let pngChartData = normalizeChartData(pngData);
 
         function smoothDuplicateX(data) {
 
@@ -1418,6 +1447,7 @@ async function setupViewerPage() {
 
         realChartData = smoothDuplicateX(realChartData);
         aiChartData = smoothDuplicateX(aiChartData);
+        pngChartData = smoothDuplicateX(pngChartData);
 
         if (realChartData.length) {
 
@@ -1464,7 +1494,7 @@ async function setupViewerPage() {
                         // REAL VIEWERS
 
                         {
-                            label: 'Real viewer attention',
+                            label: 'Анализ реального внимания зрителя в режиме mp4',
 
                             data: realChartData,
 
@@ -1487,11 +1517,11 @@ async function setupViewerPage() {
                         // AI PREDICTION
 
                         {
-                            label: 'AI predicted attention',
+                            label: 'AI предсказание зрительского внимания',
 
                             data: aiChartData,
 
-                            borderColor: '#d946ef',
+                            borderColor: '#fd70f1',
 
                             backgroundColor:
                                 'rgba(217,70,239,0.12)',
@@ -1499,6 +1529,27 @@ async function setupViewerPage() {
                             fill: true,
 
                             cubicInterpolationMode: 'monotone',
+                            tension: 0.25,
+
+                            borderWidth: 3,
+
+                            pointRadius: 0
+                        },
+
+                        {
+                            label: 'Анализ реального внимания зрителя в режиме PNG',
+
+                            data: pngChartData,
+
+                            borderColor: '#990adb',
+
+                            backgroundColor:
+                                'rgba(255,152,0,0.14)',
+
+                            fill: true,
+
+                            cubicInterpolationMode: 'monotone',
+
                             tension: 0.25,
 
                             borderWidth: 3,
