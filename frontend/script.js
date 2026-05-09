@@ -1390,6 +1390,35 @@ async function setupViewerPage() {
 
         let realChartData = normalizeChartData(analyticsData);
         let aiChartData = normalizeChartData(aiData);
+
+        function smoothDuplicateX(data) {
+
+            const result = [];
+
+            for (let i = 0; i < data.length; i++) {
+
+                const current = data[i];
+                const prev = result[result.length - 1];
+
+                if (prev && prev.x === current.x) {
+
+                    result.push({
+                        x: current.x + 0.001,
+                        y: current.y
+                    });
+
+                } else {
+
+                    result.push(current);
+                }
+            }
+
+            return result;
+        }
+
+        realChartData = smoothDuplicateX(realChartData);
+        aiChartData = smoothDuplicateX(aiChartData);
+
         if (realChartData.length) {
 
             const last =
@@ -1451,7 +1480,7 @@ async function setupViewerPage() {
 
                             borderWidth: 3,
 
-                            pointRadius: 4
+                            pointRadius: 0
                         },
 
 
