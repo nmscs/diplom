@@ -703,6 +703,8 @@ async function generateAIAttention(animationId,
 
     let previousImage = null;
 
+    let previousScore = 0;
+
     for (let i = 0; i < frameUrls.length; i += step) {
       const response = await fetch(frameUrls[i]);
 
@@ -740,7 +742,16 @@ async function generateAIAttention(animationId,
 
         const maxDiff = 64 * 64 * 255;
 
-        score = Math.round((diff / maxDiff) * 100);
+        score = Math.min(
+          60,
+          Math.round((diff / maxDiff) * 100)
+        );
+
+        score = previousScore
+          ? Math.round((previousScore * 0.7) + (score * 0.3))
+          : score;
+
+        previousScore = score;
       }
 
       const second =
