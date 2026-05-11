@@ -584,13 +584,68 @@ async function setupUploadPage() {
     let currentPngIndex = 0;
 
 
-  
-
-
-
     if (editID) {
+
         title.innerText = "Edit animation";
 
+        try {
+
+            const res = await fetch(
+                `https://diplom-r1b8.onrender.com/api/animations/${editID}`
+            );
+
+            if (!res.ok) {
+                throw new Error();
+            }
+
+            const anim = await res.json();
+
+            // TITLE / DESCRIPTION
+
+            nameInput.value = anim.title || "";
+
+            descriptionInput.value =
+                anim.description || "";
+
+            // VIDEO PREVIEW
+
+            if (anim.video_path) {
+
+                mp4Preview.src =
+                    anim.video_path;
+
+                mp4Preview.style.display =
+                    "block";
+            }
+
+            // PNG PREVIEW
+
+            if (
+                anim.frames &&
+                anim.frames.length
+            ) {
+
+                loadedPNGs =
+                    anim.frames;
+
+                currentPngIndex = 0;
+
+                pngPreview.style.display =
+                    "block";
+
+                pngPreviewImg.src =
+                    loadedPNGs[0];
+
+                pngCounter.textContent =
+                    `1 / ${loadedPNGs.length}`;
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert("Failed to load animation");
+        }
     }
 
  
@@ -649,7 +704,13 @@ async function setupUploadPage() {
 
         pngPreview.style.display = "block";
 
-        pngPreviewImg.src = URL.createObjectURL(loadedPNGs[currentPngIndex]);
+        const current =
+            loadedPNGs[currentPngIndex];
+
+        pngPreviewImg.src =
+            typeof current === "string"
+                ? current
+                : URL.createObjectURL(current);
 
         thumbnail = await createPNGThumbnail(loadedPNGs[currentPngIndex]);
 
@@ -663,7 +724,13 @@ async function setupUploadPage() {
     function updatePngPreview() {
         if (!loadedPNGs.length) return;
 
-        pngPreviewImg.src = URL.createObjectURL(loadedPNGs[currentPngIndex]);
+        const current =
+            loadedPNGs[currentPngIndex];
+
+        pngPreviewImg.src =
+            typeof current === "string"
+                ? current
+                : URL.createObjectURL(current);
 
         pngCounter.textContent = `${currentPngIndex + 1} / ${loadedPNGs.length}`;
     }
@@ -717,7 +784,10 @@ async function setupUploadPage() {
 
     saveBtn.onclick = async () => {
         saveBtn.disabled = true;
-        saveBtn.textContent = "Uploading...";
+        saveBtn.textContent =
+            editID
+                ? "Saving..."
+                : "Uploading...";
 
         const name = nameInput.value.trim();
 
@@ -744,14 +814,14 @@ async function setupUploadPage() {
         }
 
         // mp4
-        if (!loadedMP4) {
+        if (!loadedMP4 && !editID) {
             showError(mp4Error, "Upload MP4 file");
             mp4Btn.classList.add("input-error");
             firstErrorEl ??= mp4Btn;
         }
 
         // png
-        if (loadedPNGs.length === 0) {
+        if (loadedPNGs.length === 0 && !editID) {
             showError(pngError, "Upload PNG sequence");
             pngBtn.classList.add("input-error");
             firstErrorEl ??= pngBtn;
@@ -797,8 +867,13 @@ async function setupUploadPage() {
             const xhr = new XMLHttpRequest();
 
             xhr.open(
-                "POST",
-                "https://diplom-r1b8.onrender.com/api/animations"
+                editID
+                    ? "PUT"
+                    : "POST",
+
+                editID
+                    ? `https://diplom-r1b8.onrender.com/api/animations/${editID}`
+                    : "https://diplom-r1b8.onrender.com/api/animations"
             );
 
             xhr.setRequestHeader(
@@ -837,7 +912,9 @@ async function setupUploadPage() {
                 if (xhr.status >= 200 && xhr.status < 300) {
 
                     uploadStatusText.textContent =
-                        "Animation published";
+                        editID
+                            ? "Animation updated"
+                            : "Animation published";
 
                     setTimeout(() => {
                         location.href =
