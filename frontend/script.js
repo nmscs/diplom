@@ -1420,6 +1420,20 @@ async function setupViewerPage() {
         let aiChartData = normalizeChartData(aiData);
         let pngChartData = normalizeChartData(pngData);
 
+        const duration =
+            videoEl.duration || 0;
+
+        if (
+            pngChartData.length &&
+            pngChartData[pngChartData.length - 1].x < duration
+        ) {
+
+            pngChartData.push({
+                x: duration,
+                y: 0
+            });
+        }
+
         function smoothDuplicateX(data) {
 
             const result = [];
@@ -1541,10 +1555,10 @@ async function setupViewerPage() {
 
                             data: pngChartData,
 
-                            borderColor: '#990adb',
+                            borderColor: '#bd44f5',
 
                             backgroundColor:
-                                'rgba(255,152,0,0.14)',
+                                'rgba(212, 71, 255, 0.14)',
 
                             fill: true,
 

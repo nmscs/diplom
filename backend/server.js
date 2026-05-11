@@ -721,16 +721,24 @@ app.get(
           heatmap[second] = 0;
         }
 
-        heatmap[second] += 4;
+        heatmap[second] += 1;
       }
 
+      const maxScore =
+          Math.max(...Object.values(heatmap), 1);
+
       const graphData =
-        Object.entries(heatmap)
-        .map(([second, score]) => ({
-          second: Number(second),
-          score
-        }))
-        .sort((a, b) => a.second - b.second);
+          Object.entries(heatmap)
+          .map(([second, score]) => ({
+
+              second: Number(second),
+
+              score: Math.round(
+                  (score / maxScore) * 100
+              )
+
+          }))
+          .sort((a, b) => a.second - b.second);
 
       res.json(graphData);
 
