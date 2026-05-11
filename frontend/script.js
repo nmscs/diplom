@@ -752,21 +752,26 @@ async function setupUploadPage() {
         updatePngPreview();
     });
 
-    pngPreviewImg?.addEventListener("wheel", (e) => {
+    pngPreview?.addEventListener("wheel", (e) => {
+
         e.preventDefault();
+
         if (!loadedPNGs.length) return;
 
         if (e.deltaY > 0) {
-            // вперёд
+
             currentPngIndex =
                 (currentPngIndex + 1) % loadedPNGs.length;
+
         } else {
-            // назад
+
             currentPngIndex =
-                (currentPngIndex - 1 + loadedPNGs.length) % loadedPNGs.length;
+                (currentPngIndex - 1 + loadedPNGs.length)
+                % loadedPNGs.length;
         }
 
         updatePngPreview();
+
     }, { passive: false });
 
     setPngCoverBtn?.addEventListener("click", async () => {

@@ -1789,3 +1789,8 @@ body {
     transform: translateY(-1px);
     opacity: 0.92;
 }
+
+.png-preview {
+    overflow: hidden;
+    touch-action: none;
+}

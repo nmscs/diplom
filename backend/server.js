@@ -360,6 +360,9 @@ app.put(
         cover_path
       } = req.body;
 
+      console.log("REQ BODY:", req.body);
+      console.log("REQ FILES:", req.files);
+
       let videoPath =
         existing.video_path;
 
@@ -436,10 +439,12 @@ app.put(
 
     } catch (err) {
 
+      console.error("UPDATE ERROR:");
       console.error(err);
+      console.error(err?.stack);
 
       res.status(500).json({
-        error: 'Update failed'
+          error: err.message || 'Update failed'
       });
     }
   }
