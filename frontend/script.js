@@ -600,14 +600,13 @@ async function setupUploadPage() {
 
             const anim = await res.json();
 
-            // TITLE / DESCRIPTION
-
-            nameInput.value = anim.title || "";
+            nameInput.value =
+                anim.title || "";
 
             descriptionInput.value =
                 anim.description || "";
 
-            // VIDEO PREVIEW
+            // показываем превью видео
 
             if (anim.video_path) {
 
@@ -618,27 +617,30 @@ async function setupUploadPage() {
                     "block";
             }
 
-            // PNG PREVIEW
+            // показываем png cover
 
             if (
                 anim.frames &&
                 anim.frames.length
             ) {
 
-                loadedPNGs =
-                    anim.frames;
-
-                currentPngIndex = 0;
-
                 pngPreview.style.display =
                     "block";
 
                 pngPreviewImg.src =
-                    loadedPNGs[0];
+                    anim.frames[0];
 
                 pngCounter.textContent =
-                    `1 / ${loadedPNGs.length}`;
+                    `1 / ${anim.frames.length}`;
             }
+
+            // БЛОКИРУЕМ ЗАГРУЗКУ ФАЙЛОВ
+
+            mp4Btn.disabled = true;
+            pngBtn.disabled = true;
+
+            mp4Btn.style.opacity = "0.5";
+            pngBtn.style.opacity = "0.5";
 
         } catch (err) {
 
@@ -646,6 +648,7 @@ async function setupUploadPage() {
 
             alert("Failed to load animation");
         }
+
     }
 
  
@@ -843,20 +846,34 @@ async function setupUploadPage() {
             formData.append("title", name);
             formData.append("description", descriptionInput.value.trim());
 
-            formData.append("video", loadedMP4);
+            if (loadedMP4) {
+                formData.append("video", loadedMP4);
+            }
 
-            const tempVideo = document.createElement("video");
-            tempVideo.src = URL.createObjectURL(loadedMP4);
+            if (loadedMP4) {
 
-            await new Promise(resolve => {
-                tempVideo.onloadedmetadata = resolve;
-            });
+                const tempVideo =
+                    document.createElement("video");
 
-            formData.append("duration", tempVideo.duration);
+                tempVideo.src =
+                    URL.createObjectURL(loadedMP4);
 
-            loadedPNGs.forEach(file => {
-                formData.append("frames", file);
-            });
+                await new Promise(resolve => {
+                    tempVideo.onloadedmetadata = resolve;
+                });
+
+                formData.append(
+                    "duration",
+                    tempVideo.duration
+                );
+            }
+
+            if (!editID) {
+
+                loadedPNGs.forEach(file => {
+                    formData.append("frames", file);
+                });
+            }
 
             if (thumbnail) {
                 formData.append("cover", thumbnail, "cover.webp");
