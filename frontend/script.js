@@ -2161,7 +2161,7 @@ document
 
                 body: formData
             }
-        );
+        );гже
 
         if (!res.ok) {
             throw new Error();
