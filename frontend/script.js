@@ -2169,7 +2169,12 @@ document
         );гже
 
         if (!res.ok) {
-            throw new Error();
+
+            const text = await res.text();
+
+            console.error(text);
+
+            throw new Error(text || "Update failed");
         }
 
         showToast("Animation updated");
@@ -2182,7 +2187,7 @@ document
 
         console.error(err);
 
-        alert("Update failed");
+        alert(err.message || "Update failed");
     }
 });
 
