@@ -356,14 +356,15 @@ app.put(
 
       const {
         title,
-        description
+        description,
+        cover_path
       } = req.body;
 
       let videoPath =
         existing.video_path;
 
       let coverPath =
-        existing.cover_path;
+        cover_path || existing.cover_path;
 
       let framePaths =
         existing.frames || [];
@@ -540,134 +541,6 @@ app.put('/api/profile/me', authMiddleware, upload.single('avatar'), async (req, 
 // лежат в папке на один уровень выше, чем папка backend
 app.use(express.static(path.join(__dirname, '../')));
 
-// ОБНОВИТЬ АНИМАЦИЮ
-
-app.put(
-  '/api/animations/:id',
-  authMiddleware,
-  upload.fields([
-    { name: 'video', maxCount: 1 },
-    { name: 'cover', maxCount: 1 },
-    { name: 'frames', maxCount: 1000 }
-  ]),
-  async (req, res) => {
-
-    try {
-
-      const animationId = req.params.id;
-
-      const existingResult = await pool.query(
-        `
-        SELECT *
-        FROM animations
-        WHERE id = $1
-        `,
-        [animationId]
-      );
-
-      if (!existingResult.rows.length) {
-        return res.status(404).json({
-          error: 'Animation not found'
-        });
-      }
-
-      const existing =
-        existingResult.rows[0];
-
-      if (existing.author_id !== req.user.id) {
-        return res.status(403).json({
-          error: 'No access'
-        });
-      }
-
-      const { title, description } = req.body;
-
-      let videoPath =
-        existing.video_path;
-
-      let coverPath =
-        existing.cover_path;
-
-      let framePaths =
-        existing.frames || [];
-
-      // NEW VIDEO
-
-      if (req.files['video']?.[0]) {
-
-        videoPath =
-          await uploadToSupabase(
-            req.files['video'][0],
-            'videos'
-          );
-      }
-
-      // NEW COVER
-
-      if (req.files['cover']?.[0]) {
-
-        coverPath =
-          await uploadToSupabase(
-            req.files['cover'][0],
-            'covers'
-          );
-      }
-
-      // NEW FRAMES
-
-      if (
-        req.files['frames'] &&
-        req.files['frames'].length
-      ) {
-
-        framePaths = [];
-
-        for (const frame of req.files['frames']) {
-
-          const frameUrl =
-            await uploadToSupabase(
-              frame,
-              'frames'
-            );
-
-          framePaths.push(frameUrl);
-        }
-      }
-
-      const result = await pool.query(
-        `
-        UPDATE animations
-        SET
-          title = $1,
-          description = $2,
-          video_path = $3,
-          cover_path = $4,
-          frames = $5
-        WHERE id = $6
-        RETURNING *
-        `,
-        [
-          title,
-          description,
-          videoPath,
-          coverPath,
-          framePaths,
-          animationId
-        ]
-      );
-
-      res.json(result.rows[0]);
-
-    } catch (err) {
-
-      console.error(err);
-
-      res.status(500).json({
-        error: 'Update failed'
-      });
-    }
-  }
-);
 
 // Удалить анимацию
 app.delete('/api/animations/:id', authMiddleware, async (req, res) => {

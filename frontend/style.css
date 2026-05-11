@@ -1595,3 +1595,44 @@ body {
     margin: 0;
 }
 
+.animation-edit-modal {
+    width: 520px;
+}
+
+.animation-edit-modal input,
+.animation-edit-modal textarea {
+    width: 100%;
+    margin-top: 18px;
+}
+
+.edit-cover-block {
+    margin-top: 24px;
+}
+
+#editCoverPreview {
+    width: 100%;
+    border-radius: 16px;
+    display: block;
+}
+
+.edit-cover-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 16px;
+}
+
+.edit-cover-controls button {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+}
+
+#selectCoverBtn,
+#saveAnimationChanges {
+    width: 100%;
+    margin-top: 18px;
+}

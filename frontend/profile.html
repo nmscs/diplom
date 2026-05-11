@@ -9,6 +9,67 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
+<div class="modal hidden" id="editAnimationModal">
+
+    <div class="modal-content animation-edit-modal">
+
+        <button
+            class="modal-close"
+            id="closeAnimationEdit"
+        >
+            ×
+        </button>
+
+        <h2>Edit animation</h2>
+
+        <input
+            type="text"
+            id="editAnimationTitle"
+            placeholder="Animation name"
+        >
+
+        <textarea
+            id="editAnimationDescription"
+            placeholder="Animation description"
+        ></textarea>
+
+        <div class="edit-cover-block">
+
+            <img
+                id="editCoverPreview"
+                src=""
+            >
+
+            <div class="edit-cover-controls">
+
+                <button id="coverPrev">
+                    ◀
+                </button>
+
+                <span id="coverCounter">
+                    1 / 1
+                </span>
+
+                <button id="coverNext">
+                    ▶
+                </button>
+
+            </div>
+
+            <button id="selectCoverBtn">
+                Set as cover
+            </button>
+
+        </div>
+
+        <button id="saveAnimationChanges">
+            Save changes
+        </button>
+
+    </div>
+
+</div>
+
 <body>
 
     <!-- Шапка -->

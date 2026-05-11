@@ -1089,7 +1089,7 @@ async function setupProfilePage() {
         edit.innerText = "edit";
         edit.onclick = (e) => {
             e.stopPropagation();
-            location.href = `upload.html?id=${anim.id}`;
+            openAnimationEditModal(anim);
         };
 
         const del = document.createElement("div");
@@ -2026,6 +2026,159 @@ async function sendAnalyticsEvent(
         console.error("Analytics event error:", err);
     }
 }
+
+let currentEditAnimation = null;
+let currentCoverIndex = 0;
+let currentFrames = [];
+let selectedCover = null;
+
+function openAnimationEditModal(anim) {
+
+    currentEditAnimation = anim;
+
+    currentFrames = anim.frames || [];
+
+    currentCoverIndex = 0;
+
+    selectedCover =
+        anim.cover_path;
+
+    const modal =
+        document.getElementById(
+            "editAnimationModal"
+        );
+
+    modal.classList.remove("hidden");
+
+    document.getElementById(
+        "editAnimationTitle"
+    ).value =
+        anim.title || "";
+
+    document.getElementById(
+        "editAnimationDescription"
+    ).value =
+        anim.description || "";
+
+    updateEditCoverPreview();
+}
+
+function updateEditCoverPreview() {
+
+    if (!currentFrames.length) return;
+
+    document.getElementById(
+        "editCoverPreview"
+    ).src =
+        currentFrames[currentCoverIndex];
+
+    document.getElementById(
+        "coverCounter"
+    ).textContent =
+        `${currentCoverIndex + 1} / ${currentFrames.length}`;
+}
+
+document
+.getElementById("coverPrev")
+?.addEventListener("click", () => {
+
+    if (!currentFrames.length) return;
+
+    currentCoverIndex =
+        (currentCoverIndex - 1 + currentFrames.length)
+        % currentFrames.length;
+
+    updateEditCoverPreview();
+});
+
+document
+.getElementById("coverNext")
+?.addEventListener("click", () => {
+
+    if (!currentFrames.length) return;
+
+    currentCoverIndex =
+        (currentCoverIndex + 1)
+        % currentFrames.length;
+
+    updateEditCoverPreview();
+});
+
+document
+.getElementById("selectCoverBtn")
+?.addEventListener("click", () => {
+
+    selectedCover =
+        currentFrames[currentCoverIndex];
+
+    showToast("Cover selected");
+});
+
+document
+.getElementById("closeAnimationEdit")
+?.addEventListener("click", () => {
+
+    document
+    .getElementById("editAnimationModal")
+    .classList.add("hidden");
+});
+
+document
+.getElementById("saveAnimationChanges")
+?.addEventListener("click", async () => {
+
+    if (!currentEditAnimation) return;
+
+    const token =
+        localStorage.getItem("token");
+
+    const title =
+        document.getElementById(
+            "editAnimationTitle"
+        ).value.trim();
+
+    const description =
+        document.getElementById(
+            "editAnimationDescription"
+        ).value.trim();
+
+    try {
+
+        const res = await fetch(
+            `https://diplom-r1b8.onrender.com/api/animations/${currentEditAnimation.id}`,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+
+                body: JSON.stringify({
+                    title,
+                    description,
+                    cover_path: selectedCover
+                })
+            }
+        );
+
+        if (!res.ok) {
+            throw new Error();
+        }
+
+        showToast("Animation updated");
+
+        setTimeout(() => {
+            location.reload();
+        }, 600);
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert("Update failed");
+    }
+});
 
 function requireAuth(redirect = "index.html?auth=signin") {
     const token = localStorage.getItem("token");
