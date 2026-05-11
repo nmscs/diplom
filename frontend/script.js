@@ -767,7 +767,7 @@ async function setupUploadPage() {
         }
 
         updatePngPreview();
-    });
+    }, { passive: false });
 
     setPngCoverBtn?.addEventListener("click", async () => {
         if (!loadedPNGs.length) {
@@ -2144,21 +2144,22 @@ document
 
     try {
 
+        const formData = new FormData();
+
+        formData.append("title", title);
+        formData.append("description", description);
+        formData.append("cover_path", selectedCover);
+
         const res = await fetch(
             `https://diplom-r1b8.onrender.com/api/animations/${currentEditAnimation.id}`,
             {
                 method: "PUT",
 
                 headers: {
-                    "Content-Type": "application/json",
                     "Authorization": "Bearer " + token
                 },
 
-                body: JSON.stringify({
-                    title,
-                    description,
-                    cover_path: selectedCover
-                })
+                body: formData
             }
         );
 
