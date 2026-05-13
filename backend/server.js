@@ -803,6 +803,7 @@ app.get(
           second: Number(second),
           score
         }))
+
         .sort((a, b) => a.second - b.second);
 
       res.json(graphData);
@@ -853,13 +854,19 @@ app.get(
         const frame =
           Number(event.metadata?.frame);
 
+        const totalFrames =
+          Number(event.metadata?.total_frames) || 1;
+
         if (isNaN(frame)) continue;
 
-        if (!heatmap[frame]) {
-          heatmap[frame] = 0;
+        const normalizedSecond =
+            Math.round((frame / totalFrames) * 100) / 10;
+
+        if (!heatmap[normalizedSecond]) {
+            heatmap[normalizedSecond] = 0;
         }
 
-        heatmap[frame] += 1;
+        heatmap[normalizedSecond] += 1;
       }
 
       const maxScore =
