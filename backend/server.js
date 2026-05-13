@@ -831,7 +831,8 @@ app.get(
       const result = await pool.query(
         `
         SELECT
-          video_time
+          video_time,
+          metadata
         FROM animation_events
         WHERE animation_id = $1
         AND event_type = 'png_frame_view'
@@ -849,14 +850,16 @@ app.get(
           event.video_time === undefined
         ) continue;
 
-        const second =
-          Math.floor(event.video_time);
+        const frame =
+          Number(event.metadata?.frame);
 
-        if (!heatmap[second]) {
-          heatmap[second] = 0;
+        if (isNaN(frame)) continue;
+
+        if (!heatmap[frame]) {
+          heatmap[frame] = 0;
         }
 
-        heatmap[second] += 1;
+        heatmap[frame] += 1;
       }
 
       const maxScore =

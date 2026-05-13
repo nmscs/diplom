@@ -1794,3 +1794,17 @@ body {
     overflow: hidden;
     touch-action: none;
 }
+
+#closeAnimationEdit {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #ffffff;
+    font-size: 38px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#closeAnimationEdit:hover {
+    color: #d946ef;
+}

@@ -1195,6 +1195,7 @@ async function setupViewerPage() {
 
     let frames = [];
     let currentFrame = 0;
+    let pngWatchInterval = null;
 
     try {
         const token = localStorage.getItem("token");
@@ -1296,6 +1297,9 @@ async function setupViewerPage() {
     }
 
     function showVideoMode() {
+
+        clearInterval(pngWatchInterval);
+
         videoEl.style.display = "block";
         imgEl.style.display = "none";
 
@@ -1325,6 +1329,23 @@ async function setupViewerPage() {
         btnVideo.classList.remove("active");
 
         updateFrame();
+
+        clearInterval(pngWatchInterval);
+
+        pngWatchInterval = setInterval(() => {
+
+            sendAnalyticsEvent(
+                id,
+                "png_frame_view",
+                currentFrame,
+                1,
+                {
+                    frame: currentFrame,
+                    total_frames: frames.length
+                }
+            );
+
+        }, 1000);
     }
 
     btnVideo?.addEventListener("click", showVideoMode);
@@ -2108,6 +2129,27 @@ document
 
     updateEditCoverPreview();
 });
+
+document
+.getElementById("editCoverPreview")
+?.addEventListener("wheel", (e) => {
+
+    e.preventDefault();
+
+    if (!currentFrames.length) return;
+
+    if (e.deltaY > 0) {
+        currentCoverIndex =
+            (currentCoverIndex + 1) % currentFrames.length;
+    } else {
+        currentCoverIndex =
+            (currentCoverIndex - 1 + currentFrames.length)
+            % currentFrames.length;
+    }
+
+    updateEditCoverPreview();
+
+}, { passive: false });
 
 document
 .getElementById("selectCoverBtn")
