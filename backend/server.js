@@ -885,6 +885,13 @@ app.get(
           }))
           .sort((a, b) => a.second - b.second);
 
+      if (graphData.length && graphData[0].second > 0) {
+          graphData.unshift({
+              second: 0,
+              score: graphData[0].score
+          });
+      } 
+
       res.json(graphData);
 
     } catch (err) {
