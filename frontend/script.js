@@ -2209,7 +2209,7 @@ document
 
                 body: formData
             }
-        );гже
+        );
 
         if (!res.ok) {
 
