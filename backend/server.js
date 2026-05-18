@@ -760,7 +760,7 @@ app.get(
         ) continue;
 
         const second =
-          Math.floor(event.video_time);
+          Math.round(event.video_time);
 
         if (!heatmap[second]) {
           heatmap[second] = 0;
@@ -829,6 +829,18 @@ app.get(
 
       const animationId = req.params.id;
 
+      const animationResult = await pool.query(
+          `
+          SELECT duration
+          FROM animations
+          WHERE id = $1
+          `,
+          [animationId]
+      );
+
+      const duration =
+          Number(animationResult.rows[0]?.duration) || 1;
+
       const result = await pool.query(
         `
         SELECT
@@ -860,7 +872,10 @@ app.get(
         if (isNaN(frame)) continue;
 
         const normalizedSecond =
-            Math.round((frame / totalFrames) * 100) / 10;
+          Number(
+              ((frame / totalFrames) * duration)
+              .toFixed(1)
+          );
 
         if (!heatmap[normalizedSecond]) {
             heatmap[normalizedSecond] = 0;
