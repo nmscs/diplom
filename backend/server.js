@@ -943,7 +943,7 @@ async function generateAIAttention(animationId,
       [animationId]
     );
 
-    const step = Math.max(1, Math.floor(frameUrls.length / 60));
+    const step = Math.max(1, Math.floor(frameUrls.length / 200)); // максимум 200 точек вместо 60
 
     let previousImage = null;
 
