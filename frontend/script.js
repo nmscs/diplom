@@ -1320,16 +1320,26 @@ async function setupViewerPage() {
         btnPNG.classList.add("active");
         btnVideo.classList.remove("active");
 
-        updateFrame();
+        setTimeout(() => {
+            updateFrame();
+        }, 50);
 
         clearInterval(pngWatchInterval);
 
         pngWatchInterval = setInterval(() => {
 
+            const duration =
+                videoEl.duration || frames.length;
+
+            const pngTime =
+                frames.length > 1
+                    ? (currentFrame / (frames.length - 1)) * duration
+                    : 0;
+
             sendAnalyticsEvent(
                 id,
                 "png_frame_view",
-                currentFrame,
+                pngTime,
                 1,
                 {
                     frame: currentFrame,
