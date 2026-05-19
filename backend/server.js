@@ -906,9 +906,7 @@ app.get(
 
               second: Number(second),
 
-              score: Math.round(
-                  (score / maxScore) * 100
-              )
+              score
 
           }))
           .sort((a, b) => a.second - b.second);
@@ -993,9 +991,15 @@ async function generateAIAttention(animationId,
           Math.round((diff / maxDiff) * 100)
         );
 
-        score = previousScore
-          ? Math.round((previousScore * 0.7) + (score * 0.3))
-          : score;
+        const maxJump = 15; // максимальный прирост за один шаг
+        const rawScore = score;
+
+        if (previousScore) {
+            // ограничиваем резкий прыжок вверх
+            const clamped = Math.min(rawScore, previousScore + maxJump);
+            // сглаживание: 80% предыдущее, 20% новое
+            score = Math.round((previousScore * 0.8) + (clamped * 0.2));
+        } 
 
         previousScore = score;
       }
