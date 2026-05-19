@@ -1051,6 +1051,142 @@ app.get('/api/animations/:id/ai-attention',
   }
 );
 
+app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
+    try {
+        // Получаем все анимации
+        const animations = await pool.query('SELECT id FROM animations');
+        
+        let allTP = 0, allFP = 0, allTN = 0, allFN = 0;
+        const perAnimation = [];
+
+        for (const anim of animations.rows) {
+            const animId = anim.id;
+
+            // Real attention (сырые данные как в /attention)
+            const eventsResult = await pool.query(`
+                SELECT event_type, video_time, playback_rate
+                FROM animation_events
+                WHERE animation_id = $1
+                ORDER BY created_at ASC
+            `, [animId]);
+
+            const heatmap = {};
+            for (const event of eventsResult.rows) {
+                if (event.video_time === null) continue;
+                const second = Math.round(event.video_time);
+                if (!heatmap[second]) heatmap[second] = 0;
+
+                switch (event.event_type) {
+                    case 'pause':       heatmap[second] += 3; break;
+                    case 'seek':        heatmap[second] += 5; break;
+                    case 'complete':    heatmap[second] += 10; break;
+                    case 'speed_change':
+                        if (event.playback_rate < 1) heatmap[second] += 6;
+                        if (event.playback_rate > 1) heatmap[second] -= 2;
+                        break;
+                }
+            }
+
+            // AI данные
+            const aiResult = await pool.query(`
+                SELECT second, score
+                FROM animation_ai_attention
+                WHERE animation_id = $1
+                ORDER BY second ASC
+            `, [animId]);
+
+            if (!aiResult.rows.length) continue;
+
+            // Находим общие секунды
+            const aiMap = {};
+            for (const row of aiResult.rows) {
+                aiMap[row.second] = Number(row.score);
+            }
+
+            const commonSeconds = Object.keys(aiMap)
+                .map(Number)
+                .filter(s => heatmap[s] !== undefined);
+
+            if (commonSeconds.length < 2) continue;
+
+            // Нормализуем оба массива к 0-100
+            const realValues = commonSeconds.map(s => heatmap[s]);
+            const aiValues = commonSeconds.map(s => aiMap[s]);
+
+            const realMax = Math.max(...realValues, 1);
+            const aiMax = Math.max(...aiValues, 1);
+
+            const realNorm = realValues.map(v => (v / realMax) * 100);
+            const aiNorm = aiValues.map(v => (v / aiMax) * 100);
+
+            // Бинаризация по порогу 50
+            const THRESHOLD = 50;
+
+            let tp = 0, fp = 0, tn = 0, fn = 0;
+
+            for (let i = 0; i < commonSeconds.length; i++) {
+                const realHigh = realNorm[i] >= THRESHOLD;
+                const aiHigh = aiNorm[i] >= THRESHOLD;
+
+                if (realHigh && aiHigh)   tp++;  // истина-истина
+                if (!realHigh && aiHigh)  fp++;  // ложь-истина
+                if (!realHigh && !aiHigh) tn++;  // ложь-ложь
+                if (realHigh && !aiHigh)  fn++;  // истина-ложь
+            }
+
+            allTP += tp;
+            allFP += fp;
+            allTN += tn;
+            allFN += fn;
+
+            const total = tp + fp + tn + fn;
+            const accuracy  = total ? ((tp + tn) / total * 100).toFixed(2) : 0;
+            const precision = (tp + fp) ? (tp / (tp + fp) * 100).toFixed(2) : 0;
+            const recall    = (tp + fn) ? (tp / (tp + fn) * 100).toFixed(2) : 0;
+            const f1 = (precision + recall > 0)
+                ? (2 * precision * recall / (Number(precision) + Number(recall))).toFixed(2)
+                : 0;
+
+            perAnimation.push({
+                animation_id: animId,
+                points_compared: commonSeconds.length,
+                tp, fp, tn, fn,
+                accuracy, precision, recall, f1
+            });
+        }
+
+        // Суммарные метрики по всем анимациям
+        const total = allTP + allFP + allTN + allFN;
+        const accuracy  = total ? ((allTP + allTN) / total * 100).toFixed(2) : 0;
+        const precision = (allTP + allFP) ? (allTP / (allTP + allFP) * 100).toFixed(2) : 0;
+        const recall    = (allTP + allFN) ? (allTP / (allTP + allFN) * 100).toFixed(2) : 0;
+        const f1 = (Number(precision) + Number(recall) > 0)
+            ? (2 * Number(precision) * Number(recall) / (Number(precision) + Number(recall))).toFixed(2)
+            : 0;
+
+        res.json({
+            summary: {
+                total_points: total,
+                confusion_matrix: {
+                    TP: allTP,  // истина-истина
+                    FP: allFP,  // ложь-истина
+                    TN: allTN,  // ложь-ложь
+                    FN: allFN   // истина-ложь
+                },
+                accuracy:  accuracy  + '%',
+                precision: precision + '%',
+                recall:    recall    + '%',
+                f1_score:  f1
+            },
+            per_animation: perAnimation
+        });
+
+    } catch (err) {
+        console.error('Confusion matrix error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.listen(PORT, () => {
   console.log(`Сервер запущен: http://localhost:${PORT}`);
 });
