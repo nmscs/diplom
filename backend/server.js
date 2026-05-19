@@ -1191,6 +1191,27 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
     }
 });
 
+app.post('/api/animations/:id/recalculate-ai', authMiddleware, async (req, res) => {
+    try {
+        const anim = await pool.query(
+            'SELECT * FROM animations WHERE id = $1',
+            [req.params.id]
+        );
+        if (!anim.rows.length) return res.status(404).json({ error: 'Not found' });
+
+        await generateAIAttention(
+            anim.rows[0].id,
+            anim.rows[0].frames,
+            anim.rows[0].duration
+        );
+
+        res.json({ success: true, animation_id: req.params.id });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.listen(PORT, () => {
   console.log(`Сервер запущен: http://localhost:${PORT}`);
 });
