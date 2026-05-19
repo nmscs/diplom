@@ -1268,24 +1268,6 @@ async function setupViewerPage() {
         imgEl.src = frames[currentFrame];
         frameCounter.textContent = `${currentFrame + 1} / ${frames.length}`;
 
-        const duration =
-            videoEl.duration || frames.length;
-
-        const pngTime =
-            frames.length > 1
-                ? (currentFrame / (frames.length - 1)) * duration
-                : 0;
-
-        sendAnalyticsEvent(
-            id,
-            "png_frame_view",
-            pngTime,
-            1,
-            {
-                frame: currentFrame,
-                total_frames: frames.length
-            }
-        );
     }
 
     function showVideoMode() {

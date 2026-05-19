@@ -859,7 +859,12 @@ app.get(
       );
 
       const duration =
-          Number(animationResult.rows[0]?.duration) || 1;
+      Math.max(
+          Number(animationResult.rows[0]?.duration) || 0,
+          1
+      );
+
+      console.log("PNG DURATION:", duration);
 
       const result = await pool.query(
         `
@@ -903,7 +908,7 @@ app.get(
             heatmap[normalizedSecond] = 0;
         }
 
-        heatmap[normalizedSecond] += 1000;
+        heatmap[normalizedSecond] += 1;
       }
 
       const maxScore =
@@ -922,12 +927,7 @@ app.get(
           }))
           .sort((a, b) => a.second - b.second);
 
-      if (graphData.length && graphData[0].second > 0) {
-          graphData.unshift({
-              second: 0,
-              score: graphData[0].score
-          });
-      } 
+      
 
       res.json(graphData);
 
