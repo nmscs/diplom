@@ -1077,6 +1077,7 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                 if (!heatmap[second]) heatmap[second] = 0;
 
                 switch (event.event_type) {
+                    case 'play':        heatmap[second] += 1; break;
                     case 'pause':       heatmap[second] += 3; break;
                     case 'seek':        heatmap[second] += 5; break;
                     case 'complete':    heatmap[second] += 10; break;
