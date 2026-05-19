@@ -1053,7 +1053,6 @@ app.get('/api/animations/:id/ai-attention',
 
 app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
     try {
-        // Получаем все анимации
         const animations = await pool.query('SELECT id FROM animations');
         
         let allTP = 0, allFP = 0, allTN = 0, allFN = 0;
@@ -1062,7 +1061,6 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
         for (const anim of animations.rows) {
             const animId = anim.id;
 
-            // Real attention (сырые данные как в /attention)
             const eventsResult = await pool.query(`
                 SELECT event_type, video_time, playback_rate
                 FROM animation_events
@@ -1088,7 +1086,6 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                 }
             }
 
-            // AI данные
             const aiResult = await pool.query(`
                 SELECT second, score
                 FROM animation_ai_attention
@@ -1098,15 +1095,17 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
 
             if (!aiResult.rows.length) continue;
 
-            // Находим общие секунды
-            // Вместо commonSeconds — берём все секунды из AI
-            const allAiSeconds = Object.keys(aiMap).map(Number).sort((a,b) => a-b);
+            // строим aiMap из результата запроса
+            const aiMap = {};
+            for (const row of aiResult.rows) {
+                aiMap[row.second] = Number(row.score);
+            }
+
+            const allAiSeconds = Object.keys(aiMap).map(Number).sort((a, b) => a - b);
 
             if (allAiSeconds.length < 2) continue;
 
-            // Для каждой AI-секунды берём ближайшее real значение (или 0)
             const realValues = allAiSeconds.map(s => {
-                // ищем ближайшую секунду в heatmap в радиусе 3 секунд
                 let closest = 0;
                 let minDist = Infinity;
                 for (const rs of Object.keys(heatmap).map(Number)) {
@@ -1121,29 +1120,23 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
 
             const aiValues = allAiSeconds.map(s => aiMap[s]);
 
-            // Нормализуем оба массива к 0-100
-            const realValues = commonSeconds.map(s => heatmap[s]);
-            const aiValues = commonSeconds.map(s => aiMap[s]);
-
             const realMax = Math.max(...realValues, 1);
             const aiMax = Math.max(...aiValues, 1);
 
             const realNorm = realValues.map(v => (v / realMax) * 100);
             const aiNorm = aiValues.map(v => (v / aiMax) * 100);
 
-            // Бинаризация по порогу 50
             const THRESHOLD = 50;
-
             let tp = 0, fp = 0, tn = 0, fn = 0;
 
-            for (let i = 0; i < commonSeconds.length; i++) {
+            for (let i = 0; i < allAiSeconds.length; i++) {
                 const realHigh = realNorm[i] >= THRESHOLD;
                 const aiHigh = aiNorm[i] >= THRESHOLD;
 
-                if (realHigh && aiHigh)   tp++;  // истина-истина
-                if (!realHigh && aiHigh)  fp++;  // ложь-истина
-                if (!realHigh && !aiHigh) tn++;  // ложь-ложь
-                if (realHigh && !aiHigh)  fn++;  // истина-ложь
+                if (realHigh && aiHigh)   tp++;
+                if (!realHigh && aiHigh)  fp++;
+                if (!realHigh && !aiHigh) tn++;
+                if (realHigh && !aiHigh)  fn++;
             }
 
             allTP += tp;
@@ -1155,19 +1148,18 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
             const accuracy  = total ? ((tp + tn) / total * 100).toFixed(2) : 0;
             const precision = (tp + fp) ? (tp / (tp + fp) * 100).toFixed(2) : 0;
             const recall    = (tp + fn) ? (tp / (tp + fn) * 100).toFixed(2) : 0;
-            const f1 = (precision + recall > 0)
-                ? (2 * precision * recall / (Number(precision) + Number(recall))).toFixed(2)
+            const f1 = (Number(precision) + Number(recall) > 0)
+                ? (2 * Number(precision) * Number(recall) / (Number(precision) + Number(recall))).toFixed(2)
                 : 0;
 
             perAnimation.push({
                 animation_id: animId,
-                points_compared: commonSeconds.length,
+                points_compared: allAiSeconds.length,
                 tp, fp, tn, fn,
                 accuracy, precision, recall, f1
             });
         }
 
-        // Суммарные метрики по всем анимациям
         const total = allTP + allFP + allTN + allFN;
         const accuracy  = total ? ((allTP + allTN) / total * 100).toFixed(2) : 0;
         const precision = (allTP + allFP) ? (allTP / (allTP + allFP) * 100).toFixed(2) : 0;
@@ -1180,10 +1172,10 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
             summary: {
                 total_points: total,
                 confusion_matrix: {
-                    TP: allTP,  // истина-истина
-                    FP: allFP,  // ложь-истина
-                    TN: allTN,  // ложь-ложь
-                    FN: allFN   // истина-ложь
+                    TP: allTP,
+                    FP: allFP,
+                    TN: allTN,
+                    FN: allFN
                 },
                 accuracy:  accuracy  + '%',
                 precision: precision + '%',
