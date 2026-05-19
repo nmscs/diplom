@@ -807,6 +807,7 @@ app.get(
         .sort((a, b) => a.second - b.second);
 
       res.json(graphData);
+      console.log("REAL DATA:", graphData);
 
     } catch (err) {
 
@@ -1032,6 +1033,7 @@ app.get('/api/animations/:id/ai-attention',
       );
 
       res.json(result.rows);
+      console.log("AI DATA:", result.rows);
 
     } catch (err) {
 
