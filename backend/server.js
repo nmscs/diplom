@@ -992,7 +992,7 @@ async function generateAIAttention(animationId,
         );
 
         score = previousScore
-          ? Math.round((previousScore * 0.7) + (score * 0.3))
+          ? Math.round((previousScore * 0.5) + (score * 0.5))
           : score;
 
         previousScore = score;
@@ -1114,7 +1114,7 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                     aiMap[s] = v1 + (v2 - v1) * t;
                 }
             }
-            
+
             const allAiSeconds = Object.keys(aiMap).map(Number).sort((a, b) => a - b);
 
             if (allAiSeconds.length < 2) continue;
