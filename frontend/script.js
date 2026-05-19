@@ -1523,6 +1523,10 @@ async function setupViewerPage() {
         let realChartData = normalizeChartData(analyticsData);
         let aiChartData = normalizeChartData(aiData);
         let pngChartData = normalizeChartData(pngData);
+        pngChartData = pngChartData.map(point => ({
+            x: point.x * videoDuration,
+            y: point.y
+        }));
 
         const duration =
             videoEl.duration || 0;

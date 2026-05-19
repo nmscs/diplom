@@ -849,20 +849,7 @@ app.get(
 
       const animationId = req.params.id;
 
-      const animationResult = await pool.query(
-          `
-          SELECT duration
-          FROM animations
-          WHERE id = $1
-          `,
-          [animationId]
-      );
 
-      const duration =
-      Math.max(
-          Number(animationResult.rows[0]?.duration) || 0,
-          1
-      );
 
       console.log("PNG DURATION:", duration);
 
@@ -899,9 +886,8 @@ app.get(
         const normalizedSecond =
           Number(
               (
-                  (frame / Math.max(1, totalFrames - 1))
-                  * duration
-              ).toFixed(2)
+                  frame / Math.max(1, totalFrames - 1)
+              ).toFixed(3)
           );
 
         if (!heatmap[normalizedSecond]) {
