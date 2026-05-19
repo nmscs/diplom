@@ -506,6 +506,10 @@ function createVideoThumbnail(file) {
         video.preload = "metadata";
         video.src = URL.createObjectURL(file);
 
+        video.onloadedmetadata = () => {
+            animationDuration = video.duration;
+        };
+
         video.onloadeddata = () => {
             const canvas = document.createElement("canvas");
             canvas.width = 320;
@@ -583,6 +587,7 @@ async function setupUploadPage() {
     let loadedPNGs = [];
     let thumbnail = null;
     let currentPngIndex = 0;
+    let animationDuration = 0;
 
 
     if (editID) {
@@ -852,27 +857,13 @@ async function setupUploadPage() {
             formData.append("title", name);
             formData.append("description", descriptionInput.value.trim());
 
+            formData.append("duration", animationDuration);
+
             if (loadedMP4) {
                 formData.append("video", loadedMP4);
             }
 
-            if (loadedMP4) {
-
-                const tempVideo =
-                    document.createElement("video");
-
-                tempVideo.src =
-                    URL.createObjectURL(loadedMP4);
-
-                await new Promise(resolve => {
-                    tempVideo.onloadedmetadata = resolve;
-                });
-
-                formData.append(
-                    "duration",
-                    tempVideo.duration
-                );
-            }
+        
 
             if (!editID) {
 

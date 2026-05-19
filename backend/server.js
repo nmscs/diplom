@@ -295,10 +295,29 @@ app.post(
 
       console.log("Saving animation to database...");
       const result = await pool.query(
-        `INSERT INTO animations (title, description, video_path, cover_path, frames, author_id)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *`,
-        [title, description, videoPath, coverPath, framePaths, req.user.id]
+        `
+        INSERT INTO animations
+        (
+          title,
+          description,
+          video_path,
+          cover_path,
+          frames,
+          author_id,
+          duration
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *
+        `,
+        [
+          title,
+          description,
+          videoPath,
+          coverPath,
+          framePaths,
+          req.user.id,
+          Number(duration) || 0
+        ]
       );
 
       await generateAIAttention(
