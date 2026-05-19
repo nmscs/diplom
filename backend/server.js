@@ -943,7 +943,7 @@ async function generateAIAttention(animationId,
       [animationId]
     );
 
-    const step = Math.max(1, Math.floor(frameUrls.length / 200)); // максимум 200 точек вместо 60
+    const step = Math.max(1, Math.floor(frameUrls.length / 60));
 
     let previousImage = null;
 
@@ -1101,6 +1101,20 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                 aiMap[row.second] = Number(row.score);
             }
 
+            const sortedSeconds = Object.keys(aiMap).map(Number).sort((a, b) => a - b);
+
+            for (let i = 0; i < sortedSeconds.length - 1; i++) {
+                const s1 = sortedSeconds[i];
+                const s2 = sortedSeconds[i + 1];
+                const v1 = aiMap[s1];
+                const v2 = aiMap[s2];
+
+                for (let s = s1 + 0.5; s < s2; s += 0.5) {
+                    const t = (s - s1) / (s2 - s1);
+                    aiMap[s] = v1 + (v2 - v1) * t;
+                }
+            }
+            
             const allAiSeconds = Object.keys(aiMap).map(Number).sort((a, b) => a - b);
 
             if (allAiSeconds.length < 2) continue;
