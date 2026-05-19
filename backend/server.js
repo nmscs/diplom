@@ -1099,16 +1099,27 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
             if (!aiResult.rows.length) continue;
 
             // Находим общие секунды
-            const aiMap = {};
-            for (const row of aiResult.rows) {
-                aiMap[row.second] = Number(row.score);
-            }
+            // Вместо commonSeconds — берём все секунды из AI
+            const allAiSeconds = Object.keys(aiMap).map(Number).sort((a,b) => a-b);
 
-            const commonSeconds = Object.keys(aiMap)
-                .map(Number)
-                .filter(s => heatmap[s] !== undefined);
+            if (allAiSeconds.length < 2) continue;
 
-            if (commonSeconds.length < 2) continue;
+            // Для каждой AI-секунды берём ближайшее real значение (или 0)
+            const realValues = allAiSeconds.map(s => {
+                // ищем ближайшую секунду в heatmap в радиусе 3 секунд
+                let closest = 0;
+                let minDist = Infinity;
+                for (const rs of Object.keys(heatmap).map(Number)) {
+                    const dist = Math.abs(rs - s);
+                    if (dist < minDist && dist <= 3) {
+                        minDist = dist;
+                        closest = heatmap[rs];
+                    }
+                }
+                return closest;
+            });
+
+            const aiValues = allAiSeconds.map(s => aiMap[s]);
 
             // Нормализуем оба массива к 0-100
             const realValues = commonSeconds.map(s => heatmap[s]);
