@@ -851,7 +851,7 @@ app.get(
 
 
 
-      console.log("PNG DURATION:", duration);
+      
 
       const result = await pool.query(
         `
