@@ -893,15 +893,17 @@ app.get(
 
         const normalizedSecond =
           Number(
-              ((frame / totalFrames) * duration)
-              .toFixed(1)
+              (
+                  (frame / Math.max(1, totalFrames - 1))
+                  * duration
+              ).toFixed(2)
           );
 
         if (!heatmap[normalizedSecond]) {
             heatmap[normalizedSecond] = 0;
         }
 
-        heatmap[normalizedSecond] += 1;
+        heatmap[normalizedSecond] += 1000;
       }
 
       const maxScore =
