@@ -1226,6 +1226,15 @@ app.post('/api/animations/:id/recalculate-ai', authMiddleware, async (req, res) 
     }
 });
 
+app.post('/api/animations/:id/fix-duration', authMiddleware, async (req, res) => {
+    const { duration } = req.body;
+    await pool.query(
+        'UPDATE animations SET duration = $1 WHERE id = $2',
+        [duration, req.params.id]
+    );
+    res.json({ success: true });
+});
+
 app.listen(PORT, () => {
   console.log(`Сервер запущен: http://localhost:${PORT}`);
 });
