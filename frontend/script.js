@@ -1642,7 +1642,7 @@ async function setupViewerPage() {
                             fill: true,
 
                             cubicInterpolationMode: 'monotone',
-                            tension: 0.25,
+                            tension: 0.1,
 
                             borderWidth: 3,
 
