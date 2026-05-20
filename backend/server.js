@@ -897,8 +897,8 @@ app.get(
         heatmap[normalizedSecond] += 1;
       }
 
-      const maxScore =
-          Math.max(...Object.values(heatmap), 1);
+      //const maxScore =
+      //    Math.max(...Object.values(heatmap), 1);
 
       const graphData =
           Object.entries(heatmap)
@@ -1194,10 +1194,10 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
             summary: {
                 total_points: total,
                 confusion_matrix: {
-                    TP: allTP,
-                    FP: allFP,
-                    TN: allTN,
-                    FN: allFN
+                    TP: allTP, // истина-истина
+                    FP: allFP, // ложь-истина
+                    TN: allTN, // ложь-ложь
+                    FN: allFN // истина-ложь
                 },
                 accuracy:  accuracy  + '%',
                 precision: precision + '%',
