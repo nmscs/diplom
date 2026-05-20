@@ -1513,12 +1513,22 @@ async function setupViewerPage() {
             }));
         }
 
-        const videoDuration =
-            videoEl.duration || Math.max(
-                ...analyticsData.map(item => Number(item.second) || 0),
-                ...aiData.map(item => Number(item.second) || 0),
-                1
-            );
+        const videoDuration = await new Promise(resolve => {
+            if (videoEl.duration && !isNaN(videoEl.duration)) {
+                resolve(videoEl.duration);
+            } else {
+                videoEl.addEventListener('loadedmetadata', () => {
+                    resolve(videoEl.duration);
+                }, { once: true });
+                setTimeout(() => resolve(
+                    Math.max(
+                        ...analyticsData.map(item => Number(item.second) || 0),
+                        ...aiData.map(item => Number(item.second) || 0),
+                        1
+                    )
+                ), 5000);
+            }
+        });
 
         let realChartData = normalizeChartData(analyticsData);
         let aiChartData = normalizeChartData(aiData);
