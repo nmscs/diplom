@@ -1095,6 +1095,7 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
 
             if (!aiResult.rows.length) continue;
 
+            // строим aiMap из результата запроса
             const aiMap = {};
             for (const row of aiResult.rows) {
                 aiMap[row.second] = Number(row.score);
@@ -1115,6 +1116,7 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
             }
 
             const allAiSeconds = Object.keys(aiMap).map(Number).sort((a, b) => a - b);
+
             if (allAiSeconds.length < 2) continue;
 
             const realValues = allAiSeconds.map(s => {
@@ -1138,15 +1140,15 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
             const realNorm = realValues.map(v => (v / realMax) * 100);
             const aiNorm = aiValues.map(v => (v / aiMax) * 100);
 
-            // --- THRESHOLD-BASED ---
             const THRESHOLD = 50;
-            const WINDOW = 0.5;
+            const WINDOW = 1; // секунды окна совпадения
             let tp = 0, fp = 0, tn = 0, fn = 0;
 
             for (let i = 0; i < allAiSeconds.length; i++) {
                 const s = allAiSeconds[i];
                 const aiHigh = aiNorm[i] >= THRESHOLD;
 
+                // ищем real значение в окне ±WINDOW секунд
                 const windowIndices = allAiSeconds
                     .map((ws, wi) => ({ ws, wi }))
                     .filter(({ ws }) => Math.abs(ws - s) <= WINDOW);
@@ -1172,54 +1174,14 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                 ? (2 * Number(precision) * Number(recall) / (Number(precision) + Number(recall))).toFixed(2)
                 : 0;
 
-            // --- SLOPE-BASED ---
-            let slopeTP = 0, slopeFP = 0, slopeTN = 0, slopeFN = 0;
-
-            for (let i = 1; i < allAiSeconds.length; i++) {
-                const aiTrend = aiNorm[i] - aiNorm[i - 1];
-                const aiUp = aiTrend > 1;
-                const aiDown = aiTrend < -1;
-
-                const realTrend = realNorm[i] - realNorm[i - 1];
-                const realUp = realTrend > 1;
-                const realDown = realTrend < -1;
-
-                const aiMoving = aiUp || aiDown;
-                const realMoving = realUp || realDown;
-
-                if (!aiMoving && !realMoving) continue;
-
-                const sameDirection = (aiUp && realUp) || (aiDown && realDown);
-
-                if (sameDirection)            slopeTP++;
-                else if (aiMoving && !realMoving)  slopeFP++;
-                else if (!aiMoving && realMoving)  slopeFN++;
-                else                          slopeTN++;
-            }
-
-            const slopeTotal = slopeTP + slopeFP + slopeTN + slopeFN;
-            const slopeAccuracy  = slopeTotal ? ((slopeTP + slopeTN) / slopeTotal * 100).toFixed(2) : 0;
-            const slopePrecision = (slopeTP + slopeFP) ? (slopeTP / (slopeTP + slopeFP) * 100).toFixed(2) : 0;
-            const slopeRecall    = (slopeTP + slopeFN) ? (slopeTP / (slopeTP + slopeFN) * 100).toFixed(2) : 0;
-            const slopeF1 = (Number(slopePrecision) + Number(slopeRecall) > 0)
-                ? (2 * Number(slopePrecision) * Number(slopeRecall) / (Number(slopePrecision) + Number(slopeRecall))).toFixed(2)
-                : 0;
-
             perAnimation.push({
                 animation_id: animId,
                 points_compared: allAiSeconds.length,
-                threshold_based: { tp, fp, tn, fn, accuracy, precision, recall, f1 },
-                slope_based: {
-                    tp: slopeTP, fp: slopeFP, tn: slopeTN, fn: slopeFN,
-                    accuracy:  slopeAccuracy  + '%',
-                    precision: slopePrecision + '%',
-                    recall:    slopeRecall    + '%',
-                    f1_score:  slopeF1
-                }
+                tp, fp, tn, fn,
+                accuracy, precision, recall, f1
             });
         }
 
-        // --- СУММАРНЫЕ THRESHOLD МЕТРИКИ ---
         const total = allTP + allFP + allTN + allFN;
         const accuracy  = total ? ((allTP + allTN) / total * 100).toFixed(2) : 0;
         const precision = (allTP + allFP) ? (allTP / (allTP + allFP) * 100).toFixed(2) : 0;
@@ -1228,42 +1190,19 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
             ? (2 * Number(precision) * Number(recall) / (Number(precision) + Number(recall))).toFixed(2)
             : 0;
 
-        // --- СУММАРНЫЕ SLOPE МЕТРИКИ ---
-        const allSlopeTP = perAnimation.reduce((s, a) => s + a.slope_based.tp, 0);
-        const allSlopeFP = perAnimation.reduce((s, a) => s + a.slope_based.fp, 0);
-        const allSlopeTN = perAnimation.reduce((s, a) => s + a.slope_based.tn, 0);
-        const allSlopeFN = perAnimation.reduce((s, a) => s + a.slope_based.fn, 0);
-
-        const slopeTotalAll = allSlopeTP + allSlopeFP + allSlopeTN + allSlopeFN;
-        const slopeAccuracyAll  = slopeTotalAll ? ((allSlopeTP + allSlopeTN) / slopeTotalAll * 100).toFixed(2) : 0;
-        const slopePrecisionAll = (allSlopeTP + allSlopeFP) ? (allSlopeTP / (allSlopeTP + allSlopeFP) * 100).toFixed(2) : 0;
-        const slopeRecallAll    = (allSlopeTP + allSlopeFN) ? (allSlopeTP / (allSlopeTP + allSlopeFN) * 100).toFixed(2) : 0;
-        const slopeF1All = (Number(slopePrecisionAll) + Number(slopeRecallAll) > 0)
-            ? (2 * Number(slopePrecisionAll) * Number(slopeRecallAll) / (Number(slopePrecisionAll) + Number(slopeRecallAll))).toFixed(2)
-            : 0;
-
         res.json({
             summary: {
                 total_points: total,
-                threshold_based: {
-                    confusion_matrix: { TP: allTP, FP: allFP, TN: allTN, FN: allFN },
-                    accuracy:  accuracy  + '%',
-                    precision: precision + '%',
-                    recall:    recall    + '%',
-                    f1_score:  f1
+                confusion_matrix: {
+                    TP: allTP,
+                    FP: allFP,
+                    TN: allTN,
+                    FN: allFN
                 },
-                slope_based: {
-                    confusion_matrix: {
-                        TP: allSlopeTP,
-                        FP: allSlopeFP,
-                        TN: allSlopeTN,
-                        FN: allSlopeFN
-                    },
-                    accuracy:  slopeAccuracyAll  + '%',
-                    precision: slopePrecisionAll + '%',
-                    recall:    slopeRecallAll    + '%',
-                    f1_score:  slopeF1All
-                }
+                accuracy:  accuracy  + '%',
+                precision: precision + '%',
+                recall:    recall    + '%',
+                f1_score:  f1
             },
             per_animation: perAnimation
         });
