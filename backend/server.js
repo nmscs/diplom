@@ -867,34 +867,31 @@ app.get(
       );
 
       const heatmap = {};
+      const heatmapHits = {};
 
       for (const event of result.rows) {
+          if (
+              event.video_time === null ||
+              event.video_time === undefined
+          ) continue;
 
-        if (
-          event.video_time === null ||
-          event.video_time === undefined
-        ) continue;
+          const frame = Number(event.metadata?.frame);
+          const totalFrames = Number(event.metadata?.total_frames) || 1;
 
-        const frame =
-          Number(event.metadata?.frame);
+          if (isNaN(frame)) continue;
 
-        const totalFrames =
-          Number(event.metadata?.total_frames) || 1;
-
-        if (isNaN(frame)) continue;
-
-        const normalizedSecond =
-          Number(
-              (
-                  frame / Math.max(1, totalFrames - 1)
-              ).toFixed(3)
+          const normalizedSecond = Number(
+              (frame / Math.max(1, totalFrames - 1)).toFixed(3)
           );
 
-        if (!heatmap[normalizedSecond]) {
-            heatmap[normalizedSecond] = 0;
-        }
+          heatmap[normalizedSecond] = (heatmap[normalizedSecond] || 0) + 1;
+          heatmapHits[normalizedSecond] = (heatmapHits[normalizedSecond] || 0) + 1;
+      }
 
-        heatmap[normalizedSecond] += 1;
+      const totalHits = Object.values(heatmapHits).reduce((a, b) => a + b, 0) || 1;
+
+      for (const key of Object.keys(heatmap)) {
+          heatmap[key] = (heatmap[key] / totalHits) * 100;
       }
 
       //const maxScore =
