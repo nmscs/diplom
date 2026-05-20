@@ -1538,6 +1538,10 @@ async function setupViewerPage() {
             y: point.y
         }));
 
+        if (pngChartData.length) {
+            pngChartData.unshift({ x: 0, y: pngChartData[0].y });
+        }
+
         const duration =
             videoEl.duration || 0;
 
