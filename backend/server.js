@@ -1100,100 +1100,103 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
             for (const row of aiResult.rows) {
                 aiMap[row.second] = Number(row.score);
             }
+            try {
+                const sortedSeconds = Object.keys(aiMap).map(Number).sort((a, b) => a - b);
 
-            const sortedSeconds = Object.keys(aiMap).map(Number).sort((a, b) => a - b);
+                for (let i = 0; i < sortedSeconds.length - 1; i++) {
+                    const s1 = sortedSeconds[i];
+                    const s2 = sortedSeconds[i + 1];
+                    const v1 = aiMap[s1];
+                    const v2 = aiMap[s2];
 
-            for (let i = 0; i < sortedSeconds.length - 1; i++) {
-                const s1 = sortedSeconds[i];
-                const s2 = sortedSeconds[i + 1];
-                const v1 = aiMap[s1];
-                const v2 = aiMap[s2];
-
-                for (let s = s1 + 0.5; s < s2; s += 0.1) {
-                    const t = (s - s1) / (s2 - s1);
-                    aiMap[s] = v1 + (v2 - v1) * t;
-                }
-            }
-
-            const allAiSeconds = Object.keys(aiMap).map(Number).sort((a, b) => a - b);
-
-            if (allAiSeconds.length < 2) continue;
-
-            const realSeconds = Object.keys(heatmap).map(Number).sort((a, b) => a - b);
-
-            const realValues = allAiSeconds.map(s => {
-                if (!realSeconds.length) return 0;
-
-                // если точка левее всех — берём первое значение
-                if (s <= realSeconds[0]) return heatmap[realSeconds[0]];
-
-                // если точка правее всех — берём последнее значение
-                if (s >= realSeconds[realSeconds.length - 1]) return heatmap[realSeconds[realSeconds.length - 1]];
-
-                // находим соседние точки и интерполируем
-                for (let i = 0; i < realSeconds.length - 1; i++) {
-                    const s1 = realSeconds[i];
-                    const s2 = realSeconds[i + 1];
-
-                    if (s >= s1 && s <= s2) {
+                    for (let s = s1 + 0.5; s < s2; s += 0.1) {
                         const t = (s - s1) / (s2 - s1);
-                        return heatmap[s1] + (heatmap[s2] - heatmap[s1]) * t;
+                        aiMap[s] = v1 + (v2 - v1) * t;
                     }
                 }
 
-                return 0;
-            });
+                const allAiSeconds = Object.keys(aiMap).map(Number).sort((a, b) => a - b);
 
-            const aiValues = allAiSeconds.map(s => aiMap[s]);
+                if (allAiSeconds.length < 2) continue;
 
-            const realMax = realValues.reduce((a, b) => Math.max(a, b), 1);
-            const aiMax = aiValues.reduce((a, b) => Math.max(a, b), 1);
+                const realSeconds = Object.keys(heatmap).map(Number).sort((a, b) => a - b);
 
-            const realNorm = realValues.map(v => (v / realMax) * 100);
-            const aiNorm = aiValues.map(v => (v / aiMax) * 100);
+                const realValues = allAiSeconds.map(s => {
+                    if (!realSeconds.length) return 0;
 
-            const THRESHOLD = 50;
-            const WINDOW = 1; // секунды окна совпадения
-            let tp = 0, fp = 0, tn = 0, fn = 0;
+                    // если точка левее всех — берём первое значение
+                    if (s <= realSeconds[0]) return heatmap[realSeconds[0]];
 
-            for (let i = 0; i < allAiSeconds.length; i++) {
-                const s = allAiSeconds[i];
-                const aiHigh = aiNorm[i] >= THRESHOLD;
+                    // если точка правее всех — берём последнее значение
+                    if (s >= realSeconds[realSeconds.length - 1]) return heatmap[realSeconds[realSeconds.length - 1]];
 
-                // ищем real значение в окне ±WINDOW секунд
-                const windowIndices = allAiSeconds
-                    .map((ws, wi) => ({ ws, wi }))
-                    .filter(({ ws }) => Math.abs(ws - s) <= WINDOW);
+                    // находим соседние точки и интерполируем
+                    for (let i = 0; i < realSeconds.length - 1; i++) {
+                        const s1 = realSeconds[i];
+                        const s2 = realSeconds[i + 1];
 
-                const realHighInWindow = windowIndices.some(({ wi }) => realNorm[wi] >= THRESHOLD);
+                        if (s >= s1 && s <= s2) {
+                            const t = (s - s1) / (s2 - s1);
+                            return heatmap[s1] + (heatmap[s2] - heatmap[s1]) * t;
+                        }
+                    }
 
-                if (aiHigh && realHighInWindow)   tp++;
-                if (aiHigh && !realHighInWindow)  fp++;
-                if (!aiHigh && !realHighInWindow) tn++;
-                if (!aiHigh && realHighInWindow)  fn++;
+                    return 0;
+                });
+
+                const aiValues = allAiSeconds.map(s => aiMap[s]);
+
+                const realMax = realValues.reduce((a, b) => Math.max(a, b), 1);
+                const aiMax = aiValues.reduce((a, b) => Math.max(a, b), 1);
+
+                const realNorm = realValues.map(v => (v / realMax) * 100);
+                const aiNorm = aiValues.map(v => (v / aiMax) * 100);
+
+                const THRESHOLD = 50;
+                const WINDOW = 1; // секунды окна совпадения
+                let tp = 0, fp = 0, tn = 0, fn = 0;
+
+                for (let i = 0; i < allAiSeconds.length; i++) {
+                    const s = allAiSeconds[i];
+                    const aiHigh = aiNorm[i] >= THRESHOLD;
+
+                    // ищем real значение в окне ±WINDOW секунд
+                    const windowIndices = allAiSeconds
+                        .map((ws, wi) => ({ ws, wi }))
+                        .filter(({ ws }) => Math.abs(ws - s) <= WINDOW);
+
+                    const realHighInWindow = windowIndices.some(({ wi }) => realNorm[wi] >= THRESHOLD);
+
+                    if (aiHigh && realHighInWindow)   tp++;
+                    if (aiHigh && !realHighInWindow)  fp++;
+                    if (!aiHigh && !realHighInWindow) tn++;
+                    if (!aiHigh && realHighInWindow)  fn++;
+                }
+
+                console.log(`anim ${animId}: allAiSeconds=${allAiSeconds.length}, tp=${tp}, fp=${fp}, tn=${tn}, fn=${fn}, total=${tp+fp+tn+fn}`);
+
+                allTP += tp;
+                allFP += fp;
+                allTN += tn;
+                allFN += fn;
+
+                const total = tp + fp + tn + fn;
+                const accuracy  = total ? ((tp + tn) / total * 100).toFixed(2) : 0;
+                const precision = (tp + fp) ? (tp / (tp + fp) * 100).toFixed(2) : 0;
+                const recall    = (tp + fn) ? (tp / (tp + fn) * 100).toFixed(2) : 0;
+                const f1 = (Number(precision) + Number(recall) > 0)
+                    ? (2 * Number(precision) * Number(recall) / (Number(precision) + Number(recall))).toFixed(2)
+                    : 0;
+
+                perAnimation.push({
+                    animation_id: animId,
+                    points_compared: allAiSeconds.length,
+                    tp, fp, tn, fn,
+                    accuracy, precision, recall, f1
+                });
+            } catch (err) {
+                console.error(`anim ${animId} ERROR:`, err.message);
             }
-
-            console.log(`anim ${animId}: allAiSeconds=${allAiSeconds.length}, tp=${tp}, fp=${fp}, tn=${tn}, fn=${fn}, total=${tp+fp+tn+fn}`);
-
-            allTP += tp;
-            allFP += fp;
-            allTN += tn;
-            allFN += fn;
-
-            const total = tp + fp + tn + fn;
-            const accuracy  = total ? ((tp + tn) / total * 100).toFixed(2) : 0;
-            const precision = (tp + fp) ? (tp / (tp + fp) * 100).toFixed(2) : 0;
-            const recall    = (tp + fn) ? (tp / (tp + fn) * 100).toFixed(2) : 0;
-            const f1 = (Number(precision) + Number(recall) > 0)
-                ? (2 * Number(precision) * Number(recall) / (Number(precision) + Number(recall))).toFixed(2)
-                : 0;
-
-            perAnimation.push({
-                animation_id: animId,
-                points_compared: allAiSeconds.length,
-                tp, fp, tn, fn,
-                accuracy, precision, recall, f1
-            });
         }
 
         const total = allTP + allFP + allTN + allFN;
