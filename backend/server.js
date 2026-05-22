@@ -1146,8 +1146,8 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
 
             const aiValues = allAiSeconds.map(s => aiMap[s]);
 
-            const realMax = Math.max(...realValues, 1);
-            const aiMax = Math.max(...aiValues, 1);
+            const realMax = realValues.reduce((a, b) => Math.max(a, b), 1);
+            const aiMax = aiValues.reduce((a, b) => Math.max(a, b), 1);
 
             const realNorm = realValues.map(v => (v / realMax) * 100);
             const aiNorm = aiValues.map(v => (v / aiMax) * 100);
