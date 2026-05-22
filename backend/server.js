@@ -1091,6 +1091,8 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
             `, [animId]);
 
             if (!aiResult.rows.length) continue;
+            
+            console.log(`anim ${animId}: aiRows=${aiResult.rows.length}, heatmapKeys=${Object.keys(heatmap).length}`);
 
             // строим aiMap из результата запроса
             const aiMap = {};
