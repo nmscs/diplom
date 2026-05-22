@@ -1109,7 +1109,7 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                     const v1 = aiMap[s1];
                     const v2 = aiMap[s2];
 
-                    for (let s = s1 + 0.01; s < s2; s += 0.01) {
+                    for (let s = s1 + 0.005; s < s2; s += 0.005) {
                         const t = (s - s1) / (s2 - s1);
                         aiMap[s] = v1 + (v2 - v1) * t;
                     }
