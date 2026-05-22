@@ -1109,7 +1109,7 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                     const v1 = aiMap[s1];
                     const v2 = aiMap[s2];
 
-                    for (let s = s1 + 0.02; s < s2; s += 0.02) {
+                    for (let s = s1 + 0.01; s < s2; s += 0.01) {
                         const t = (s - s1) / (s2 - s1);
                         aiMap[s] = v1 + (v2 - v1) * t;
                     }
@@ -1154,8 +1154,8 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                 const realNorm = realValues.map(v => (v / realMax) * 100);
                 const aiNorm = aiValues.map(v => (v / aiMax) * 100);
 
-                const THRESHOLD = 50;
-                const WINDOW = 1; // секунды окна совпадения
+                const THRESHOLD = 40;
+                const WINDOW = 2; // секунды окна совпадения
                 let tp = 0, fp = 0, tn = 0, fn = 0;
 
                 for (let i = 0; i < allAiSeconds.length; i++) {
