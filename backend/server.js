@@ -1116,17 +1116,29 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
 
             if (allAiSeconds.length < 2) continue;
 
+            const realSeconds = Object.keys(heatmap).map(Number).sort((a, b) => a - b);
+
             const realValues = allAiSeconds.map(s => {
-                let closest = 0;
-                let minDist = Infinity;
-                for (const rs of Object.keys(heatmap).map(Number)) {
-                    const dist = Math.abs(rs - s);
-                    if (dist < minDist && dist <= 3) {
-                        minDist = dist;
-                        closest = heatmap[rs];
+                if (!realSeconds.length) return 0;
+
+                // если точка левее всех — берём первое значение
+                if (s <= realSeconds[0]) return heatmap[realSeconds[0]];
+
+                // если точка правее всех — берём последнее значение
+                if (s >= realSeconds[realSeconds.length - 1]) return heatmap[realSeconds[realSeconds.length - 1]];
+
+                // находим соседние точки и интерполируем
+                for (let i = 0; i < realSeconds.length - 1; i++) {
+                    const s1 = realSeconds[i];
+                    const s2 = realSeconds[i + 1];
+
+                    if (s >= s1 && s <= s2) {
+                        const t = (s - s1) / (s2 - s1);
+                        return heatmap[s1] + (heatmap[s2] - heatmap[s1]) * t;
                     }
                 }
-                return closest;
+
+                return 0;
             });
 
             const aiValues = allAiSeconds.map(s => aiMap[s]);
