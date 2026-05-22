@@ -1109,7 +1109,7 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                     const v1 = aiMap[s1];
                     const v2 = aiMap[s2];
 
-                    for (let s = s1 + 0.5; s < s2; s += 0.1) {
+                    for (let s = s1 + 0.1; s < s2; s += 0.1) {
                         const t = (s - s1) / (s2 - s1);
                         aiMap[s] = v1 + (v2 - v1) * t;
                     }
@@ -1117,6 +1117,8 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
 
                 const allAiSeconds = Object.keys(aiMap).map(Number).sort((a, b) => a - b);
 
+                console.log(`anim ${animId}: allAiSeconds length=${allAiSeconds.length}`); // ← добавь
+                
                 if (allAiSeconds.length < 2) continue;
 
                 const realSeconds = Object.keys(heatmap).map(Number).sort((a, b) => a - b);
