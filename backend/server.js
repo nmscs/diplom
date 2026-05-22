@@ -1155,7 +1155,7 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                 const aiNorm = aiValues.map(v => (v / aiMax) * 100);
 
                 const THRESHOLD = 40;
-                const WINDOW = 2; // секунды окна совпадения
+                const WINDOW = 1; // секунды окна совпадения
                 let tp = 0, fp = 0, tn = 0, fn = 0;
 
                 for (let i = 0; i < allAiSeconds.length; i++) {
