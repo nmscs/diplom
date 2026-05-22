@@ -1094,6 +1094,7 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
             
             console.log(`anim ${animId}: aiRows=${aiResult.rows.length}, heatmapKeys=${Object.keys(heatmap).length}`);
 
+
             // строим aiMap из результата запроса
             const aiMap = {};
             for (const row of aiResult.rows) {
@@ -1171,6 +1172,8 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                 if (!aiHigh && !realHighInWindow) tn++;
                 if (!aiHigh && realHighInWindow)  fn++;
             }
+
+            console.log(`anim ${animId}: allAiSeconds=${allAiSeconds.length}, tp=${tp}, fp=${fp}, tn=${tn}, fn=${fn}, total=${tp+fp+tn+fn}`);
 
             allTP += tp;
             allFP += fp;
