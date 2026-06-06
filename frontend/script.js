@@ -1212,6 +1212,13 @@ async function setupViewerPage() {
 
         const anim = await res.json();
 
+
+        // скрываем quality card если это не твоя анимация
+        if (anim.author_username !== currentUser) {
+            const qCard = document.getElementById('qualityCardSection');
+            if (qCard) qCard.style.display = 'none';
+        }
+
         
 
         titleEl.textContent = anim.title || "Untitled animation";
@@ -1780,7 +1787,12 @@ async function setupViewerPage() {
             document.getElementById('qAvg').textContent = `${q.avg_dynamic}/100`;
             document.getElementById('qPeak').textContent = `${q.peak_dynamic}/100`;
             document.getElementById('qStability').textContent = `${q.stability}/100`;
-            document.getElementById('qProblems').textContent = q.problem_scenes;
+            if (q.problem_scenes === 0) {
+                document.getElementById('qProblems').textContent = 'нет';
+            } else {
+                const timecodes = q.problem_timecodes.join(', ');
+                document.getElementById('qProblems').textContent = `${q.problem_scenes} (${timecodes})`;
+            }
             document.getElementById('qPeakTime').textContent = q.peak_time;
             document.getElementById('qTotal').textContent = `${q.total_score}/100`;
 

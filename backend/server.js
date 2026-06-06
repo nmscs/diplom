@@ -1296,15 +1296,34 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
         const stability = Math.round(Math.max(0, 100 - stdDev));
 
         // Проблемные сцены — участки где score < 20% от максимума
-        let problemScenes = 0;
+        // сохраняем таймкоды проблемных сцен
+        const problemTimecodes = [];
         let inProblem = false;
-        for (const s of normScores) {
-            if (s < 20) {
-                if (!inProblem) { problemScenes++; inProblem = true; }
+        let problemStart = null;
+
+        for (let i = 0; i < normScores.length; i++) {
+            if (normScores[i] < 20) {
+                if (!inProblem) {
+                    inProblem = true;
+                    problemStart = seconds[i];
+                }
             } else {
-                inProblem = false;
+                if (inProblem) {
+                    inProblem = false;
+                    const mins = Math.floor(problemStart / 60).toString().padStart(2, '0');
+                    const secs = Math.floor(problemStart % 60).toString().padStart(2, '0');
+                    problemTimecodes.push(`${mins}:${secs}`);
+                }
             }
         }
+        // если проблема до конца
+        if (inProblem) {
+            const mins = Math.floor(problemStart / 60).toString().padStart(2, '0');
+            const secs = Math.floor(problemStart % 60).toString().padStart(2, '0');
+            problemTimecodes.push(`${mins}:${secs}`);
+        }
+
+        const problemScenes = problemTimecodes.length;
 
         // Самая сильная сцена — секунда с максимальным score
         const peakIndex = normScores.indexOf(Math.max(...normScores));
@@ -1321,6 +1340,7 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
             peak_dynamic: peakDynamic,
             stability: stability,
             problem_scenes: problemScenes,
+            problem_timecodes: problemTimecodes,
             peak_time: peakTime,
             total_score: totalScore
         });
