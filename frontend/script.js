@@ -1769,31 +1769,31 @@ async function setupViewerPage() {
         );
     }
 
-    showVideoMode(); // всегда сначала видео
-}
+    // QUALITY CARD
+    try {
+        const qRes = await fetch(
+            `https://diplom-r1b8.onrender.com/api/animations/${id}/quality-card`
+        );
+        const q = await qRes.json();
 
-// QUALITY CARD
-try {
-    const qRes = await fetch(
-        `https://diplom-r1b8.onrender.com/api/animations/${id}/quality-card`
-    );
-    const q = await qRes.json();
+        if (!q.error) {
+            document.getElementById('qAvg').textContent = `${q.avg_dynamic}/100`;
+            document.getElementById('qPeak').textContent = `${q.peak_dynamic}/100`;
+            document.getElementById('qStability').textContent = `${q.stability}/100`;
+            document.getElementById('qProblems').textContent = q.problem_scenes;
+            document.getElementById('qPeakTime').textContent = q.peak_time;
+            document.getElementById('qTotal').textContent = `${q.total_score}/100`;
 
-    if (!q.error) {
-        document.getElementById('qAvg').textContent = `${q.avg_dynamic}/100`;
-        document.getElementById('qPeak').textContent = `${q.peak_dynamic}/100`;
-        document.getElementById('qStability').textContent = `${q.stability}/100`;
-        document.getElementById('qProblems').textContent = q.problem_scenes;
-        document.getElementById('qPeakTime').textContent = q.peak_time;
-        document.getElementById('qTotal').textContent = `${q.total_score}/100`;
-
-        document.getElementById('qualityCopyBtn')?.addEventListener('click', () => {
-            const text = `Карта качества анимации:\nСредняя динамика: ${q.avg_dynamic}/100\nПиковая динамика: ${q.peak_dynamic}/100\nСтабильность внимания: ${q.stability}/100\nПроблемные сцены: ${q.problem_scenes}\nСамая сильная сцена: ${q.peak_time}\nОбщая оценка: ${q.total_score}/100`;
-            navigator.clipboard.writeText(text).then(() => showToast('Скопировано'));
-        });
+            document.getElementById('qualityCopyBtn')?.addEventListener('click', () => {
+                const text = `Карта качества анимации:\nСредняя динамика: ${q.avg_dynamic}/100\nПиковая динамика: ${q.peak_dynamic}/100\nСтабильность внимания: ${q.stability}/100\nПроблемные сцены: ${q.problem_scenes}\nСамая сильная сцена: ${q.peak_time}\nОбщая оценка: ${q.total_score}/100`;
+                navigator.clipboard.writeText(text).then(() => showToast('Скопировано'));
+            });
+        }
+    } catch (err) {
+        console.error('Quality card error:', err);
     }
-} catch (err) {
-    console.error('Quality card error:', err);
+
+    showVideoMode(); // всегда сначала видео
 }
 
 async function setupWorksPage() {
