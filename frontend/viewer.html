@@ -90,47 +90,35 @@
         </div>
 
         <!-- ANALYTICS -->
-
         <div class="analytics-section">
 
-        <div class="analytics-header">
+            <div class="analytics-header">
 
-            <div class="analytics-title-wrapper">
+                <div class="analytics-title-wrapper">
 
-                <h2 class="analytics-title">
-                    Аналитика внимания зрителей
-                </h2>
+                    <h2 class="analytics-title">
+                        Аналитика внимания зрителей
+                    </h2>
 
-                <div class="analytics-help">
-                    ?
-                    
-                    <div class="analytics-tooltip">
-                        Этот график отображает внимание зрителя на протяжении всей анимации.
+                    <div class="analytics-help">
+                        ?
+                        
+                        <div class="analytics-tooltip">
+                            Этот график отображает внимание зрителя на протяжении всей анимации.
 
-                        Система анализирует: паузы и повторный просмотр; изменения скорости воспроизведения ;повторный просмотр определенных моментов; интенсивность взаимодействия во время воспроизведения.
+                            Система анализирует: паузы и повторный просмотр; изменения скорости воспроизведения; повторный просмотр определенных моментов; интенсивность взаимодействия во время воспроизведения.
 
-                        Более высокие значения указывают на повышенное внимание зрителя.
+                            Более высокие значения указывают на повышенное внимание зрителя.
+                        </div>
                     </div>
+
                 </div>
 
             </div>
 
-            <!--<div class="analytics-legend">
-
-                <div class="legend-item">
-                    <div class="legend-color real"></div>
-                    <span>Реальное внимание зрителя</span>
-                </div>
-
-                В будущем -->
-                <!--
-                <div class="legend-item">
-                    <div class="legend-color ai"></div>
-                    <span>AI predicted attention</span>
-                </div>
-                -->
-
-            <!--</div>-->
+            <div class="chart-wrapper">
+                <canvas id="attentionChart"></canvas>
+            </div>
 
         </div>
 
@@ -171,12 +159,6 @@
                 <button class="quality-copy-btn" id="qualityCopyBtn" title="Скопировать">⧉</button>
             </div>
         </div>
-
-        <div class="chart-wrapper">
-            <canvas id="attentionChart"></canvas>
-        </div>
-
-    </div>
 
     </div>
 
