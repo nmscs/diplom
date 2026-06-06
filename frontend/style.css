@@ -1808,3 +1808,97 @@ body {
 #closeAnimationEdit:hover {
     color: #d946ef;
 }
+
+/* QUALITY CARD */
+
+.quality-card-section {
+    margin-top: 40px;
+    padding: 40px;
+    border-radius: 24px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+}
+
+.quality-card-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #d946ef;
+    margin-bottom: 28px;
+}
+
+.quality-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.quality-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.quality-label {
+    font-size: 16px;
+    color: rgba(255,255,255,0.7);
+}
+
+.quality-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+}
+
+.quality-total-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.quality-total {
+    flex: 1;
+    background: rgba(217,70,239,0.12);
+    border: 1px solid rgba(217,70,239,0.25);
+    border-radius: 14px;
+    padding: 16px 22px;
+    font-size: 16px;
+    color: white;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.quality-total-label {
+    color: rgba(255,255,255,0.7);
+}
+
+.quality-total-value {
+    font-weight: 700;
+    color: #d946ef;
+    font-size: 18px;
+}
+
+.quality-copy-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quality-copy-btn:hover {
+    background: rgba(255,255,255,0.14);
+    color: white;
+}

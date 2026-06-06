@@ -134,6 +134,44 @@
 
         </div>
 
+        <!-- QUALITY CARD -->
+        <div class="quality-card-section" id="qualityCardSection">
+            <div class="quality-card-header">
+                <h2 class="quality-card-title">Карта качества анимации</h2>
+            </div>
+
+            <div class="quality-metrics" id="qualityMetrics">
+                <div class="quality-row">
+                    <span class="quality-label">Средняя динамика</span>
+                    <span class="quality-value" id="qAvg">—</span>
+                </div>
+                <div class="quality-row">
+                    <span class="quality-label">Пиковая динамика</span>
+                    <span class="quality-value" id="qPeak">—</span>
+                </div>
+                <div class="quality-row">
+                    <span class="quality-label">Стабильность внимания</span>
+                    <span class="quality-value" id="qStability">—</span>
+                </div>
+                <div class="quality-row">
+                    <span class="quality-label">Проблемные сцены</span>
+                    <span class="quality-value" id="qProblems">—</span>
+                </div>
+                <div class="quality-row">
+                    <span class="quality-label">Самая сильная сцена</span>
+                    <span class="quality-value" id="qPeakTime">—</span>
+                </div>
+            </div>
+
+            <div class="quality-total-wrapper">
+                <div class="quality-total" id="qualityTotal">
+                    <span class="quality-total-label">Общая оценка анимации:</span>
+                    <span class="quality-total-value" id="qTotal">—</span>
+                </div>
+                <button class="quality-copy-btn" id="qualityCopyBtn" title="Скопировать">⧉</button>
+            </div>
+        </div>
+
         <div class="chart-wrapper">
             <canvas id="attentionChart"></canvas>
         </div>

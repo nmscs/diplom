@@ -1109,7 +1109,7 @@ app.get('/api/analytics/confusion-matrix', authMiddleware, async (req, res) => {
                     const v1 = aiMap[s1];
                     const v2 = aiMap[s2];
 
-                    for (let s = s1 + 0.005; s < s2; s += 0.005) {
+                    for (let s = s1 + 0.01; s < s2; s += 0.01) {
                         const t = (s - s1) / (s2 - s1);
                         aiMap[s] = v1 + (v2 - v1) * t;
                     }
@@ -1260,6 +1260,75 @@ app.post('/api/animations/:id/fix-duration', authMiddleware, async (req, res) =>
         [duration, req.params.id]
     );
     res.json({ success: true });
+});
+
+app.get('/api/animations/:id/quality-card', async (req, res) => {
+    try {
+        const animId = req.params.id;
+
+        const aiResult = await pool.query(`
+            SELECT second, score
+            FROM animation_ai_attention
+            WHERE animation_id = $1
+            ORDER BY second ASC
+        `, [animId]);
+
+        if (!aiResult.rows.length) {
+            return res.json({ error: 'No AI data' });
+        }
+
+        const scores = aiResult.rows.map(r => Number(r.score));
+        const seconds = aiResult.rows.map(r => Number(r.second));
+
+        const maxScore = Math.max(...scores, 1);
+        const normScores = scores.map(s => (s / maxScore) * 100);
+
+        // Средняя динамика
+        const avgDynamic = Math.round(normScores.reduce((a, b) => a + b, 0) / normScores.length);
+
+        // Пиковая динамика
+        const peakDynamic = Math.round(Math.max(...normScores));
+
+        // Стабильность — чем меньше разброс, тем выше стабильность
+        const mean = normScores.reduce((a, b) => a + b, 0) / normScores.length;
+        const variance = normScores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / normScores.length;
+        const stdDev = Math.sqrt(variance);
+        const stability = Math.round(Math.max(0, 100 - stdDev));
+
+        // Проблемные сцены — участки где score < 20% от максимума
+        let problemScenes = 0;
+        let inProblem = false;
+        for (const s of normScores) {
+            if (s < 20) {
+                if (!inProblem) { problemScenes++; inProblem = true; }
+            } else {
+                inProblem = false;
+            }
+        }
+
+        // Самая сильная сцена — секунда с максимальным score
+        const peakIndex = normScores.indexOf(Math.max(...normScores));
+        const peakSecond = seconds[peakIndex];
+        const minutes = Math.floor(peakSecond / 60).toString().padStart(2, '0');
+        const secs = Math.floor(peakSecond % 60).toString().padStart(2, '0');
+        const peakTime = `${minutes}:${secs}`;
+
+        // Общая оценка
+        const totalScore = Math.round((avgDynamic * 0.3) + (peakDynamic * 0.2) + (stability * 0.3) + (Math.max(0, 100 - problemScenes * 10) * 0.2));
+
+        res.json({
+            avg_dynamic: avgDynamic,
+            peak_dynamic: peakDynamic,
+            stability: stability,
+            problem_scenes: problemScenes,
+            peak_time: peakTime,
+            total_score: totalScore
+        });
+
+    } catch (err) {
+        console.error('Quality card error:', err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.listen(PORT, () => {
