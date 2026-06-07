@@ -1281,10 +1281,12 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
         const scores = aiResult.rows.map(r => Number(r.score));
         const seconds = aiResult.rows.map(r => Number(r.second));
 
-        // убираем все точки с second=0 — первый кадр всегда score=0
-        // так как не с чем сравнивать, он искажает результат
+        // убираем первые 10% длительности анимации — там score нестабильный
+        const totalDuration = Math.max(...seconds, 1);
+        const skipUntil = totalDuration * 0.1;
+
         const filtered = aiResult.rows
-            .filter(r => Number(r.second) > 0)
+            .filter(r => Number(r.second) > skipUntil)
             .map(r => ({ score: Number(r.score), second: Number(r.second) }));
 
         if (!filtered.length) {
@@ -1295,8 +1297,8 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
         const filteredSeconds = filtered.map(r => r.second);
 
         // нормализуем к реальному максимуму среди отфильтрованных данных
-        const realMax = Math.max(...filteredScores, 1);
-        const normScores = filteredScores.map(s => Math.round((s / realMax) * 100));
+        const ALGO_MAX = 60;
+        const normScores = filteredScores.map(s => Math.round((s / ALGO_MAX) * 100));
 
         const avgDynamic = Math.round(normScores.reduce((a, b) => a + b, 0) / normScores.length);
         const peakDynamic = Math.round(Math.max(...normScores));
