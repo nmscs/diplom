@@ -1281,16 +1281,25 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
         const scores = aiResult.rows.map(r => Number(r.score));
         const seconds = aiResult.rows.map(r => Number(r.second));
 
-        // пропускаем первый кадр — у него всегда score=0 так как не с чем сравнивать
-        const scoresWithoutFirst = scores.slice(1);
-        const secondsWithoutFirst = seconds.slice(1);
+        // убираем все точки с second=0 — первый кадр всегда score=0
+        // так как не с чем сравнивать, он искажает результат
+        const filtered = aiResult.rows
+            .filter(r => Number(r.second) > 0)
+            .map(r => ({ score: Number(r.score), second: Number(r.second) }));
 
-        const ALGO_MAX = 60; // Math.min(60, ...) в generateAIAttention
-        const normScores = scoresWithoutFirst.map(s => Math.round((s / ALGO_MAX) * 100));
+        if (!filtered.length) {
+            return res.json({ error: 'Not enough data' });
+        }
 
-        // Средняя динамика
+        const filteredScores = filtered.map(r => r.score);
+        const filteredSeconds = filtered.map(r => r.second);
+
+        // нормализуем к реальному максимуму среди отфильтрованных данных
+        const realMax = Math.max(...filteredScores, 1);
+        const normScores = filteredScores.map(s => Math.round((s / realMax) * 100));
+
         const avgDynamic = Math.round(normScores.reduce((a, b) => a + b, 0) / normScores.length);
-        const peakDynamic = Math.round(Math.max(...normScores)); // теперь не всегда 100
+        const peakDynamic = Math.round(Math.max(...normScores));
 
         const mean = normScores.reduce((a, b) => a + b, 0) / normScores.length;
         const variance = normScores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / normScores.length;
@@ -1305,7 +1314,7 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
             if (normScores[i] < 20) {
                 if (!inProblem) {
                     inProblem = true;
-                    problemStart = secondsWithoutFirst[i]; // ← используем secondsWithoutFirst
+                    problemStart = filteredSeconds[i];
                 }
             } else {
                 if (inProblem) {
@@ -1325,13 +1334,17 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
         const problemScenes = problemTimecodes.length;
 
         const peakIndex = normScores.indexOf(Math.max(...normScores));
-        const peakSecond = secondsWithoutFirst[peakIndex]; // ← используем secondsWithoutFirst
-        const minutes = Math.floor(peakSecond / 60).toString().padStart(2, '0');
-        const secs = Math.floor(peakSecond % 60).toString().padStart(2, '0');
-        const peakTime = `${minutes}:${secs}`;
+        const peakSecond = filteredSeconds[peakIndex];
+        const peakMinutes = Math.floor(peakSecond / 60).toString().padStart(2, '0');
+        const peakSecs = Math.floor(peakSecond % 60).toString().padStart(2, '0');
+        const peakTime = `${peakMinutes}:${peakSecs}`;
 
-        // Общая оценка
-        const totalScore = Math.round((avgDynamic * 0.3) + (peakDynamic * 0.2) + (stability * 0.3) + (Math.max(0, 100 - problemScenes * 10) * 0.2));
+        const totalScore = Math.round(
+            (avgDynamic * 0.3) +
+            (peakDynamic * 0.2) +
+            (stability * 0.3) +
+            (Math.max(0, 100 - problemScenes * 10) * 0.2)
+        );
 
         res.json({
             avg_dynamic: avgDynamic,
