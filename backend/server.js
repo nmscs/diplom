@@ -1277,26 +1277,26 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
             return res.json({ error: 'No AI data' });
         }
 
+        // СТАЛО — нормализуем к реальному максимуму 60 (ограничение в generateAIAttention)
         const scores = aiResult.rows.map(r => Number(r.score));
         const seconds = aiResult.rows.map(r => Number(r.second));
 
-        const maxScore = Math.max(...scores, 1);
-        const normScores = scores.map(s => (s / maxScore) * 100);
+        // пропускаем первый кадр — у него всегда score=0 так как не с чем сравнивать
+        const scoresWithoutFirst = scores.slice(1);
+        const secondsWithoutFirst = seconds.slice(1);
+
+        const ALGO_MAX = 60; // Math.min(60, ...) в generateAIAttention
+        const normScores = scoresWithoutFirst.map(s => Math.round((s / ALGO_MAX) * 100));
 
         // Средняя динамика
         const avgDynamic = Math.round(normScores.reduce((a, b) => a + b, 0) / normScores.length);
+        const peakDynamic = Math.round(Math.max(...normScores)); // теперь не всегда 100
 
-        // Пиковая динамика
-        const peakDynamic = Math.round(Math.max(...normScores));
-
-        // Стабильность — чем меньше разброс, тем выше стабильность
         const mean = normScores.reduce((a, b) => a + b, 0) / normScores.length;
         const variance = normScores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / normScores.length;
         const stdDev = Math.sqrt(variance);
         const stability = Math.round(Math.max(0, 100 - stdDev));
 
-        // Проблемные сцены — участки где score < 20% от максимума
-        // сохраняем таймкоды проблемных сцен
         const problemTimecodes = [];
         let inProblem = false;
         let problemStart = null;
@@ -1305,29 +1305,27 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
             if (normScores[i] < 20) {
                 if (!inProblem) {
                     inProblem = true;
-                    problemStart = seconds[i];
+                    problemStart = secondsWithoutFirst[i]; // ← используем secondsWithoutFirst
                 }
             } else {
                 if (inProblem) {
                     inProblem = false;
-                    const mins = Math.floor(problemStart / 60).toString().padStart(2, '0');
-                    const secs = Math.floor(problemStart % 60).toString().padStart(2, '0');
-                    problemTimecodes.push(`${mins}:${secs}`);
+                    const startMin = Math.floor(problemStart / 60).toString().padStart(2, '0');
+                    const startSec = Math.floor(problemStart % 60).toString().padStart(2, '0');
+                    problemTimecodes.push(`${startMin}:${startSec}`);
                 }
             }
         }
-        // если проблема до конца
         if (inProblem) {
-            const mins = Math.floor(problemStart / 60).toString().padStart(2, '0');
-            const secs = Math.floor(problemStart % 60).toString().padStart(2, '0');
-            problemTimecodes.push(`${mins}:${secs}`);
+            const startMin = Math.floor(problemStart / 60).toString().padStart(2, '0');
+            const startSec = Math.floor(problemStart % 60).toString().padStart(2, '0');
+            problemTimecodes.push(`${startMin}:${startSec}`);
         }
 
         const problemScenes = problemTimecodes.length;
 
-        // Самая сильная сцена — секунда с максимальным score
         const peakIndex = normScores.indexOf(Math.max(...normScores));
-        const peakSecond = seconds[peakIndex];
+        const peakSecond = secondsWithoutFirst[peakIndex]; // ← используем secondsWithoutFirst
         const minutes = Math.floor(peakSecond / 60).toString().padStart(2, '0');
         const secs = Math.floor(peakSecond % 60).toString().padStart(2, '0');
         const peakTime = `${minutes}:${secs}`;
