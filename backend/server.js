@@ -1323,104 +1323,25 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
         const stability100 = Math.max(0, 100 - stdDev);
         const stability = Math.round((stability100 / 10) * 10) / 10;
 
-        // --- Проблемные сцены ---
-        // порог: ниже 30% от среднего нормализованного значения
-        const problemThreshold = mean * 0.30;
-        const MIN_PROBLEM_LEN = 2;
-
-        const problemTimecodes = [];
-        let inProblem = false;
-        let problemStart = null;
-        let problemLen = 0;
-
-        for (let i = 0; i < normScores.length; i++) {
-            if (normScores[i] < problemThreshold) {
-                if (!inProblem) {
-                    inProblem = true;
-                    problemStart = filteredSeconds[i];
-                    problemLen = 1;
-                } else {
-                    problemLen++;
-                }
-            } else {
-                if (inProblem) {
-                    inProblem = false;
-                    if (problemLen >= MIN_PROBLEM_LEN) {
-                        const m = Math.floor(problemStart / 60).toString().padStart(2, '0');
-                        const s = Math.floor(problemStart % 60).toString().padStart(2, '0');
-                        problemTimecodes.push(`${m}:${s}`);
-                    }
-                    problemLen = 0;
-                }
-            }
-        }
-        if (inProblem && problemLen >= MIN_PROBLEM_LEN) {
-            const m = Math.floor(problemStart / 60).toString().padStart(2, '0');
-            const s = Math.floor(problemStart % 60).toString().padStart(2, '0');
-            problemTimecodes.push(`${m}:${s}`);
-        }
-
-        const problemScenes = problemTimecodes.length;
-
-        // --- Маска проблемных индексов для поиска пика ---
-        const problemMask = new Array(normScores.length).fill(false);
-        inProblem = false;
-        problemLen = 0;
-        let problemStartIdx = null;
-
-        for (let i = 0; i < normScores.length; i++) {
-            if (normScores[i] < problemThreshold) {
-                if (!inProblem) { inProblem = true; problemStartIdx = i; problemLen = 1; }
-                else { problemLen++; }
-            } else {
-                if (inProblem) {
-                    inProblem = false;
-                    if (problemLen >= MIN_PROBLEM_LEN) {
-                        for (let j = problemStartIdx; j < i; j++) problemMask[j] = true;
-                    }
-                    problemLen = 0;
-                }
-            }
-        }
-        if (inProblem && problemLen >= MIN_PROBLEM_LEN) {
-            for (let j = problemStartIdx; j < normScores.length; j++) problemMask[j] = true;
-        }
-
-        // пик среди непроблемных точек
-        let peakScore = -1;
-        let peakIndex = 0;
-        for (let i = 0; i < normScores.length; i++) {
-            if (!problemMask[i] && normScores[i] > peakScore) {
-                peakScore = normScores[i];
-                peakIndex = i;
-            }
-        }
-        if (peakScore < 0) {
-            peakIndex = normScores.indexOf(Math.max(...normScores));
-        }
-
+        // --- Самая сильная сцена --- 
+        const peakIndex = normScores.indexOf(Math.max(...normScores));
         const peakSecond = filteredSeconds[peakIndex];
         const peakTime = `${Math.floor(peakSecond / 60).toString().padStart(2, '0')}:${Math.floor(peakSecond % 60).toString().padStart(2, '0')}`;
 
         // --- Итоговая оценка (0-10) ---
-        const problemPenalty = Math.max(0, 10 - problemScenes * 0.5);
         const totalScore = Math.round((
-            (avgDynamic * 0.35) +
-            (dynamicRange * 0.25) +
-            (stability * 0.25) +
-            (problemPenalty * 0.15)
+            (avgDynamic * 0.40) +
+            (dynamicRange * 0.30) +
+            (stability * 0.30)
         ) * 10) / 10;
 
         res.json({
             avg_dynamic: avgDynamic,
             dynamic_range: dynamicRange,
             stability: stability,
-            problem_scenes: problemScenes,
-            problem_timecodes: problemTimecodes,
             peak_time: peakTime,
             total_score: totalScore
         });
-
     } catch (err) {
         console.error('Quality card error:', err);
         res.status(500).json({ error: err.message });

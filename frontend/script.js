@@ -1787,17 +1787,11 @@ async function setupViewerPage() {
             document.getElementById('qAvg').textContent = `${q.avg_dynamic}/10`;
             document.getElementById('qRange').textContent = `${q.dynamic_range}/10`;
             document.getElementById('qStability').textContent = `${q.stability}/10`;
-            if (q.problem_scenes === 0) {
-                document.getElementById('qProblems').textContent = 'нет';
-            } else {
-                const timecodes = q.problem_timecodes.join(', ');
-                document.getElementById('qProblems').textContent = `${q.problem_scenes} (${timecodes})`;
-            }
             document.getElementById('qPeakTime').textContent = q.peak_time;
             document.getElementById('qTotal').textContent = `${q.total_score}/10`;
 
             document.getElementById('qualityCopyBtn')?.addEventListener('click', () => {
-                const text = `Карта качества анимации:\nСредняя динамика: ${q.avg_dynamic}/10\nДинамический диапазон: ${q.dynamic_range}/10\nСтабильность внимания: ${q.stability}/10\nПроблемные сцены: ${q.problem_scenes}\nСамая сильная сцена: ${q.peak_time}\nОбщая оценка: ${q.total_score}/10`;
+                const text = `Карта качества анимации:\nСредняя динамика: ${q.avg_dynamic}/10\nДинамический диапазон: ${q.dynamic_range}/10\nСтабильность внимания: ${q.stability}/10\nСамая сильная сцена: ${q.peak_time}\nОбщая оценка: ${q.total_score}/10`;
                 navigator.clipboard.writeText(text).then(() => showToast('Скопировано'));
             });
         }
