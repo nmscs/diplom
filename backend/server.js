@@ -1277,56 +1277,56 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
             return res.json({ error: 'No AI data' });
         }
 
-        const seconds = aiResult.rows.map(r => Number(r.second));
+        const allRows = aiResult.rows.map(r => ({
+            score: Number(r.score),
+            second: Number(r.second)
+        }));
 
-        // убираем первые 15% И минимум первые 2 секунды — первый кадр всегда score=0
-        const totalDuration = Math.max(...seconds, 1);
-        const skipUntil = Math.max(2, totalDuration * 0.15);
+        const totalDuration = Math.max(...allRows.map(r => r.second), 1);
 
-        const filtered = aiResult.rows
-            .filter(r => Number(r.second) > skipUntil)
-            .map(r => ({ score: Number(r.score), second: Number(r.second) }));
+        // пропускаем первую точку (second=0, score всегда 0) и не более 10% начала
+        // но если данных мало — берём всё кроме первой точки
+        const skipUntil = Math.min(totalDuration * 0.10, 3);
+        let filtered = allRows.filter(r => r.second > skipUntil);
 
+        // защита: если после фильтра осталось меньше 3 точек — берём всё
+        if (filtered.length < 3) {
+            filtered = allRows.slice(1); // убираем только первую точку (score=0)
+        }
+
+        // и если совсем пусто — берём всё
         if (!filtered.length) {
-            return res.json({ error: 'Not enough data' });
+            filtered = allRows;
         }
 
         const filteredScores = filtered.map(r => r.score);
         const filteredSeconds = filtered.map(r => r.second);
 
-        // нормализуем к реальному пику, затем применяем sqrt-усиление:
-        // это поднимает низкие значения ближе к середине шкалы,
-        // сохраняя при этом относительный порядок (пик остаётся пиком)
+        // нормализуем к реальному пику + sqrt для подъёма низких значений
         const realMax = Math.max(...filteredScores, 1);
         const normScores = filteredScores.map(s => Math.sqrt(s / realMax) * 100);
 
-        // --- Средняя динамика ---
+        // --- Средняя динамика (0-10) ---
         const avgDynamic100 = normScores.reduce((a, b) => a + b, 0) / normScores.length;
-        // приводим к 10-балльной с одним знаком после запятой
         const avgDynamic = Math.round((avgDynamic100 / 10) * 10) / 10;
 
-        // --- Динамический диапазон ---
-        // насколько контрастна анимация: разница макс-мин относительно макса
-        const maxNorm = Math.max(...normScores); // всегда 100 после нормализации
+        // --- Динамический диапазон (0-10) ---
+        const maxNorm = Math.max(...normScores);
         const minNorm = Math.min(...normScores);
         const dynamicRange100 = Math.min(100, ((maxNorm - minNorm) / Math.max(maxNorm, 1)) * 100);
-        const dynamicRange = Math.round(dynamicRange100 / 10 * 10) / 10;
+        const dynamicRange = Math.round((dynamicRange100 / 10) * 10) / 10;
 
-        // --- Стабильность ---
-        // низкое стандартное отклонение = стабильно = хорошо
+        // --- Стабильность (0-10) ---
         const mean = normScores.reduce((a, b) => a + b, 0) / normScores.length;
         const variance = normScores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / normScores.length;
         const stdDev = Math.sqrt(variance);
         const stability100 = Math.max(0, 100 - stdDev);
-        const stability = Math.round(stability100 / 10 * 10) / 10;
+        const stability = Math.round((stability100 / 10) * 10) / 10;
 
-        // порог: ниже 30% от среднего
-        // после sqrt-нормализации значения выше, поэтому порог тоже чуть поднимаем
+        // --- Проблемные сцены ---
+        // порог: ниже 30% от среднего нормализованного значения
         const problemThreshold = mean * 0.30;
-
-        // минимальная длина проблемного участка — 3 точки подряд
-        // после расширения скипа коротких участков стало меньше, можно поднять планку
-        const MIN_PROBLEM_LEN = 3;
+        const MIN_PROBLEM_LEN = 2;
 
         const problemTimecodes = [];
         let inProblem = false;
@@ -1346,25 +1346,23 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
                 if (inProblem) {
                     inProblem = false;
                     if (problemLen >= MIN_PROBLEM_LEN) {
-                        const startMin = Math.floor(problemStart / 60).toString().padStart(2, '0');
-                        const startSec = Math.floor(problemStart % 60).toString().padStart(2, '0');
-                        problemTimecodes.push(`${startMin}:${startSec}`);
+                        const m = Math.floor(problemStart / 60).toString().padStart(2, '0');
+                        const s = Math.floor(problemStart % 60).toString().padStart(2, '0');
+                        problemTimecodes.push(`${m}:${s}`);
                     }
                     problemLen = 0;
                 }
             }
         }
         if (inProblem && problemLen >= MIN_PROBLEM_LEN) {
-            const startMin = Math.floor(problemStart / 60).toString().padStart(2, '0');
-            const startSec = Math.floor(problemStart % 60).toString().padStart(2, '0');
-            problemTimecodes.push(`${startMin}:${startSec}`);
+            const m = Math.floor(problemStart / 60).toString().padStart(2, '0');
+            const s = Math.floor(problemStart % 60).toString().padStart(2, '0');
+            problemTimecodes.push(`${m}:${s}`);
         }
 
         const problemScenes = problemTimecodes.length;
 
-        // --- Самая сильная сцена ---
-        // ищем пик СРЕДИ точек, которые НЕ попали в проблемные зоны
-        // сначала строим маску проблемных индексов
+        // --- Маска проблемных индексов для поиска пика ---
         const problemMask = new Array(normScores.length).fill(false);
         inProblem = false;
         problemLen = 0;
@@ -1372,13 +1370,8 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
 
         for (let i = 0; i < normScores.length; i++) {
             if (normScores[i] < problemThreshold) {
-                if (!inProblem) {
-                    inProblem = true;
-                    problemStartIdx = i;
-                    problemLen = 1;
-                } else {
-                    problemLen++;
-                }
+                if (!inProblem) { inProblem = true; problemStartIdx = i; problemLen = 1; }
+                else { problemLen++; }
             } else {
                 if (inProblem) {
                     inProblem = false;
@@ -1393,7 +1386,7 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
             for (let j = problemStartIdx; j < normScores.length; j++) problemMask[j] = true;
         }
 
-        // пик только среди "хороших" точек
+        // пик среди непроблемных точек
         let peakScore = -1;
         let peakIndex = 0;
         for (let i = 0; i < normScores.length; i++) {
@@ -1402,18 +1395,14 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
                 peakIndex = i;
             }
         }
-        // если все точки проблемные (крайний случай) — берём глобальный пик
         if (peakScore < 0) {
             peakIndex = normScores.indexOf(Math.max(...normScores));
         }
 
         const peakSecond = filteredSeconds[peakIndex];
-        const peakMinutes = Math.floor(peakSecond / 60).toString().padStart(2, '0');
-        const peakSecs = Math.floor(peakSecond % 60).toString().padStart(2, '0');
-        const peakTime = `${peakMinutes}:${peakSecs}`;
+        const peakTime = `${Math.floor(peakSecond / 60).toString().padStart(2, '0')}:${Math.floor(peakSecond % 60).toString().padStart(2, '0')}`;
 
-        // --- Итоговая оценка ---
-        // штраф за проблемные сцены мягче: -0.5 за каждую, но не ниже 0
+        // --- Итоговая оценка (0-10) ---
         const problemPenalty = Math.max(0, 10 - problemScenes * 0.5);
         const totalScore = Math.round((
             (avgDynamic * 0.35) +
