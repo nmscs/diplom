@@ -1301,19 +1301,26 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
         const normScores = filteredScores.map(s => Math.round((s / ALGO_MAX) * 100));
 
         const avgDynamic = Math.round(normScores.reduce((a, b) => a + b, 0) / normScores.length);
-        const peakDynamic = Math.round(Math.max(...normScores));
+
+        // динамический диапазон — контраст между активными и спокойными сценами
+        const maxScore = Math.max(...normScores);
+        const minScore = Math.min(...normScores);
+        const dynamicRange = Math.round(Math.min(100, ((maxScore - minScore) / Math.max(maxScore, 1)) * 100));
 
         const mean = normScores.reduce((a, b) => a + b, 0) / normScores.length;
         const variance = normScores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / normScores.length;
         const stdDev = Math.sqrt(variance);
         const stability = Math.round(Math.max(0, 100 - stdDev));
 
+        // порог проблемных сцен — 15% от максимального score
+        const problemThreshold = maxScore * 0.15;
+
         const problemTimecodes = [];
         let inProblem = false;
         let problemStart = null;
 
         for (let i = 0; i < normScores.length; i++) {
-            if (normScores[i] < 20) {
+            if (normScores[i] < problemThreshold) {
                 if (!inProblem) {
                     inProblem = true;
                     problemStart = filteredSeconds[i];
@@ -1342,15 +1349,15 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
         const peakTime = `${peakMinutes}:${peakSecs}`;
 
         const totalScore = Math.round(
-            (avgDynamic * 0.3) +
-            (peakDynamic * 0.2) +
-            (stability * 0.3) +
-            (Math.max(0, 100 - problemScenes * 10) * 0.2)
+            (avgDynamic * 0.35) +
+            (dynamicRange * 0.25) +
+            (stability * 0.25) +
+            (Math.max(0, 100 - problemScenes * 10) * 0.15)
         );
 
         res.json({
             avg_dynamic: avgDynamic,
-            peak_dynamic: peakDynamic,
+            dynamic_range: dynamicRange,
             stability: stability,
             problem_scenes: problemScenes,
             problem_timecodes: problemTimecodes,

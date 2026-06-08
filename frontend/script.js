@@ -1785,7 +1785,7 @@ async function setupViewerPage() {
 
         if (!q.error) {
             document.getElementById('qAvg').textContent = `${q.avg_dynamic}/100`;
-            document.getElementById('qPeak').textContent = `${q.peak_dynamic}/100`;
+            document.getElementById('qRange').textContent = `${q.dynamic_range}/100`;
             document.getElementById('qStability').textContent = `${q.stability}/100`;
             if (q.problem_scenes === 0) {
                 document.getElementById('qProblems').textContent = 'нет';
@@ -1797,7 +1797,7 @@ async function setupViewerPage() {
             document.getElementById('qTotal').textContent = `${q.total_score}/100`;
 
             document.getElementById('qualityCopyBtn')?.addEventListener('click', () => {
-                const text = `Карта качества анимации:\nСредняя динамика: ${q.avg_dynamic}/100\nПиковая динамика: ${q.peak_dynamic}/100\nСтабильность внимания: ${q.stability}/100\nПроблемные сцены: ${q.problem_scenes}\nСамая сильная сцена: ${q.peak_time}\nОбщая оценка: ${q.total_score}/100`;
+                const text = `Карта качества анимации:\nСредняя динамика: ${q.avg_dynamic}/100\nДинамический диапазон: ${q.dynamic_range}/100\nСтабильность внимания: ${q.stability}/100\nПроблемные сцены: ${q.problem_scenes}\nСамая сильная сцена: ${q.peak_time}\nОбщая оценка: ${q.total_score}/100`;
                 navigator.clipboard.writeText(text).then(() => showToast('Скопировано'));
             });
         }
