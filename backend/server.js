@@ -1279,9 +1279,9 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
 
         const seconds = aiResult.rows.map(r => Number(r.second));
 
-        // убираем первые 10% — там score нестабильный (первый кадр всегда 0)
+        // убираем первые 15% И минимум первые 2 секунды — первый кадр всегда score=0
         const totalDuration = Math.max(...seconds, 1);
-        const skipUntil = totalDuration * 0.1;
+        const skipUntil = Math.max(2, totalDuration * 0.15);
 
         const filtered = aiResult.rows
             .filter(r => Number(r.second) > skipUntil)
@@ -1294,15 +1294,16 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
         const filteredScores = filtered.map(r => r.score);
         const filteredSeconds = filtered.map(r => r.second);
 
-        // нормализуем к реальному пику среди отфильтрованных данных
-        // (не к ALGO_MAX=60, чтобы не занижать среднее для коротких/спокойных анимаций)
+        // нормализуем к реальному пику, затем применяем sqrt-усиление:
+        // это поднимает низкие значения ближе к середине шкалы,
+        // сохраняя при этом относительный порядок (пик остаётся пиком)
         const realMax = Math.max(...filteredScores, 1);
-        const normScores = filteredScores.map(s => (s / realMax) * 100);
+        const normScores = filteredScores.map(s => Math.sqrt(s / realMax) * 100);
 
         // --- Средняя динамика ---
-        // среднее нормализованных значений → 0-100, потом в 10-балльную
         const avgDynamic100 = normScores.reduce((a, b) => a + b, 0) / normScores.length;
-        const avgDynamic = Math.round(avgDynamic100 / 10 * 10) / 10; // одна десятая
+        // приводим к 10-балльной с одним знаком после запятой
+        const avgDynamic = Math.round((avgDynamic100 / 10) * 10) / 10;
 
         // --- Динамический диапазон ---
         // насколько контрастна анимация: разница макс-мин относительно макса
@@ -1319,12 +1320,13 @@ app.get('/api/animations/:id/quality-card', async (req, res) => {
         const stability100 = Math.max(0, 100 - stdDev);
         const stability = Math.round(stability100 / 10 * 10) / 10;
 
-        // --- Проблемные сцены ---
-        // порог: ниже 25% от среднего (не от максимума — иначе почти всё "проблемное")
-        const problemThreshold = mean * 0.25;
+        // порог: ниже 30% от среднего
+        // после sqrt-нормализации значения выше, поэтому порог тоже чуть поднимаем
+        const problemThreshold = mean * 0.30;
 
-        // минимальная длина проблемного участка — 2 точки подряд (фильтруем шум)
-        const MIN_PROBLEM_LEN = 2;
+        // минимальная длина проблемного участка — 3 точки подряд
+        // после расширения скипа коротких участков стало меньше, можно поднять планку
+        const MIN_PROBLEM_LEN = 3;
 
         const problemTimecodes = [];
         let inProblem = false;
